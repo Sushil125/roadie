@@ -463,10 +463,12 @@ function setMe(pos){const c=pos.coords;const ll=[c.longitude,c.latitude];
 function locateOnce(fly){return new Promise(res=>{
   if(!navigator.geolocation){toast('This phone cannot share location');return res(null)}
   navigator.geolocation.getCurrentPosition(p=>{setMe(p);if(fly)map.flyTo({center:me.ll,zoom:Math.max(map.getZoom(),14.5)});startBgWatch();res(me)},
-    e=>{if(fly)toast(e.code===1?'Location is blocked. Allow it in your browser settings.':'Could not find your location');res(null)},
+    e=>{if(fly){if(e.code===1)toast(locBlockedMsg(),9000);else toast('Could not find your location')}res(null)},
     {enableHighAccuracy:true,timeout:12000,maximumAge:15000})})}
 $('bLocate').onclick=()=>locateOnce(true);
 let bgWatch=null;
+const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function locBlockedMsg(){return isIOS?'Location is blocked. On iPhone open Settings, Privacy & Security, Location Services, Safari Websites, and pick While Using the App. Then reload Roadie.':'Location is blocked. Allow it in your browser settings, then reload.'}
 function startBgWatch(){if(bgWatch!=null||nav.on||!navigator.geolocation)return;bgWatch=navigator.geolocation.watchPosition(p=>{if(!nav.on)setMe(p)},()=>{},{enableHighAccuracy:false,maximumAge:30000})}
 
 /* ===================== search ===================== */
@@ -610,7 +612,7 @@ async function startNav(){if(!route.data)return;
   const n=route.alerts.length;nav.spoken[0]={far:1,near:1,now:1};
   say((route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(n?n+' alert'+(n>1?'s':'')+' on your route.':''),true);
   updateBanner();
-  nav.watch=navigator.geolocation.watchPosition(onFix,e=>{if(e.code===1){toast('Location is blocked, so directions cannot follow you',5000);stopNav()}},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+  nav.watch=navigator.geolocation.watchPosition(onFix,e=>{if(e.code===1){toast(locBlockedMsg(),9000);stopNav()}},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
   try{if('wakeLock' in navigator)nav.wake=await navigator.wakeLock.request('screen')}catch(e){}
   if(me){meMarker.setRotation(me.heading||0);followCam(true)}}
 function stopNav(arrived){if(!nav.on)return;nav.on=false;if(nav.watch!=null)navigator.geolocation.clearWatch(nav.watch);nav.watch=null;
