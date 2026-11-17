@@ -4,7 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Roadie - Melbourne road alerts</title>
-<meta name="theme-color" content="#0f1720">
+<meta name="theme-color" content="#171329">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap">
 <meta name="description" content="Live crashes, hazards, flooded roads, roadworks and emergencies around Melbourne, with turn by turn directions.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -13,11 +15,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
-:root{--bg:#0f1720;--card:#17212b;--card2:#1f2b38;--txt:#e9f1f7;--mut:#8fa3b5;--acc:#33ccff;--acc2:#0aa4d8;--accT:#5ad6ff;--red:#ff4d4f;--ok:#3ddc84;
-  --line:#ffffff17;--tag:#ffffff14;--glass:#17212be6;--sh:#0009;--sw:#33414f;--err:#ffb4a8;--warnT:#ffcc80;--warnBg:#2a1a12;
+:root{--bg:#171329;--card:#221c3b;--card2:#2d2650;--txt:#fbf4ff;--mut:#ae9fcc;--acc:#ff7ab8;--acc2:#ff5ca8;--accT:#ff9fd0;--red:#ff4d6d;--ok:#5ff2b0;
+  --line:#ffffff17;--tag:#ffffff14;--glass:#221c3be6;--sh:#0009;--sw:#4a3f70;--err:#ffb4c0;--warnT:#ffcc80;--warnBg:#33182b;
   --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
-body.day{--bg:#eef1f4;--card:#fff;--card2:#eef2f6;--txt:#15212c;--mut:#5d6d7c;--accT:#0a78b0;--ok:#12893f;
-  --line:#0000001a;--tag:#0000000d;--glass:#ffffffeb;--sh:#0000003d;--sw:#c9d2db;--err:#c0392b;--warnT:#a85600;--warnBg:#fff4e5}
+body.day{--bg:#fdf2f7;--card:#fff;--card2:#fbe9f2;--txt:#3a2a4a;--mut:#8a789c;--accT:#d63c86;--ok:#0f9d63;
+  --line:#3a2a4a1a;--tag:#3a2a4a0f;--glass:#ffffffeb;--sh:#b4508a3d;--sw:#efd3e2;--err:#c0392b;--warnT:#a85600;--warnBg:#fff3e6}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 #map{position:fixed;inset:0}
@@ -179,15 +181,100 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
 .pp .act.gray{background:var(--card2);color:var(--txt)}
 .pp .act.red{background:#ff4d4f;color:#fff}
 .pp .act:disabled{opacity:.45}
+/* ===================== cute look (v6) ===================== */
+html,body{font-family:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button:not(#recenter){transition:transform .22s cubic-bezier(.34,1.7,.5,1),background-color .2s}
+button:not(#recenter):active{transform:scale(.9)}
+#sbox{border-radius:30px;border:2px solid #ff7ab855;box-shadow:0 6px 20px var(--sh)}
+#sbox #qi{color:var(--acc);opacity:1}
+.chip{border-radius:999px;padding:4px 12px 4px 4px;box-shadow:0 3px 10px var(--sh)}
+.chip.on{border-color:var(--acc)}
+.fab{border-radius:20px;box-shadow:0 5px 16px var(--sh)}
+.fab.rep,#nReport{background:linear-gradient(145deg,#ffc06b,#ff8a3d)!important;color:#3a1a00!important}
+#status{border-radius:999px;padding:6px 13px 6px 42px;font-weight:600}
+#status::before{content:"";position:absolute;left:8px;top:50%;width:28px;height:24px;margin-top:-12px;background:var(--mascot) center/contain no-repeat}
+.sheet{border-radius:30px 30px 0 0;animation:up .38s cubic-bezier(.34,1.45,.55,1)}
+.sheet::before{width:46px;height:6px;background:var(--acc);opacity:.5}
+.sheet h3{font-weight:900}
+.btn{border-radius:20px;font-weight:800}
+.btn.go{background:linear-gradient(135deg,#ff92c9,#ff5ca8);color:#fff;box-shadow:0 6px 16px #ff5ca855}
+.btn.stop{background:linear-gradient(135deg,#ff8080,#ff4d6d);color:#fff}
+.pp .act{background:linear-gradient(135deg,#ff92c9,#ff5ca8);color:#fff;border-radius:14px}
+.big b{font-weight:900}
+.big span{border-radius:999px;padding:5px 12px}
+.seg{border-radius:999px}
+.seg button{border-radius:999px}
+.seg button.on{background:var(--acc);color:#fff}
+.rt{border-radius:22px}
+.inp{border-radius:16px}
+.buddy{display:flex;align-items:flex-end;gap:8px;margin:2px 0 10px}
+.buddy svg{flex:none;width:52px;height:44px}
+.bub{flex:1;min-width:0;background:var(--card2);border-radius:18px 18px 18px 6px;padding:9px 13px;font-size:14px;line-height:1.3}
+.bub.wsub,.bub.okmsg{margin:0}
+.hello{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 24px;gap:4px}
+.hello svg{width:130px;height:110px;margin-bottom:8px;animation:bob 2.6s ease-in-out infinite}
+.hello b{font-size:22px;font-weight:900}
+.hello small{color:var(--mut);font-size:15px}
+#banner{background:linear-gradient(135deg,#7b5cff,#b35cff);border-radius:26px;box-shadow:0 8px 22px #3b1fa666}
+#bSub{background:#00000029}
+#warn{border-radius:22px}
+#navbar{border-radius:30px 30px 0 0}
+#speed{border-color:var(--acc)}
+#recenter{border-radius:999px}
+#toast{background:linear-gradient(135deg,#ff8fc8,#a678ff);color:#fff;border-radius:999px;padding:10px 18px;font-weight:800;box-shadow:0 8px 22px #0005;animation:tpop .35s cubic-bezier(.34,1.6,.5,1)}
+.maplibregl-popup-content{border-radius:20px}
+#me .ring{position:absolute;left:-6px;top:-6px;width:42px;height:42px;border-radius:50%;background:#ff5ca840;animation:pulse 2.2s ease-out infinite}
+#me .pal{position:absolute;left:-9px;top:-9px;width:48px;height:41px;filter:drop-shadow(0 3px 3px #0006)}
+#me .dot,#me.nav .ring,#me.nav .pal{display:none}
+.eye{animation:blink 4.4s infinite;transform-box:fill-box;transform-origin:center}
+#splash{position:fixed;inset:0;z-index:50;background:radial-gradient(circle at 50% 38%,#ffd3ea,#ff8fc8 55%,#a985ff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;transition:opacity .45s}
+#splash svg{width:160px;height:135px;animation:hop 1s infinite}
+#splash h1{margin:8px 0 0;font-size:46px;font-weight:900;letter-spacing:.5px;text-shadow:0 3px 0 #d94f95}
+#splash p{margin:0;font-weight:800;opacity:.92}
+#splash.out{opacity:0;pointer-events:none}
+#yay{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:#17132999;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);overflow:hidden}
+#yay .card{background:var(--card);border-radius:30px;padding:20px 24px 18px;text-align:center;width:min(320px,86%);box-shadow:0 20px 50px #0007;animation:up .5s cubic-bezier(.34,1.6,.5,1)}
+#yay .card svg{width:130px;height:110px;animation:hop 1s infinite}
+#yay h2{margin:4px 0 2px;font-size:30px;font-weight:900;color:var(--acc)}
+#yay p{margin:0 0 14px;color:var(--mut);font-weight:600}
+#yay .cf{position:absolute;top:-24px;width:10px;height:15px;border-radius:3px;pointer-events:none;animation:fall linear forwards}
+@keyframes up{from{transform:translateY(60px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes tpop{from{transform:translateX(-50%) scale(.6);opacity:0}to{transform:translateX(-50%) scale(1);opacity:1}}
+@keyframes pulse{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+@keyframes hop{0%,100%{transform:translateY(0) scaleY(.95)}12%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-22px)}88%{transform:translateY(0) scaleY(1)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes fall{to{transform:translateY(115vh) rotate(800deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div id="splash"><div id="splM"></div><h1>Roadie</h1><p>Getting the roads ready...</p></div>
+<script>
+function mascot(cls){return '<svg xmlns="http://www.w3.org/2000/svg" class="'+(cls||'')+'" viewBox="0 -2 120 102" aria-hidden="true">'
+ +'<ellipse cx="60" cy="96" rx="40" ry="4" fill="#00000030"/>'
+ +'<path d="M60 18V11" stroke="#3a2a4a" stroke-width="4" stroke-linecap="round"/>'
+ +'<path d="M60 13C55 9 51 7 51 3.5C51 .8 53-.5 55.5-.5C57.5-.5 59 1 60 2.5C61 1 62.5-.5 64.5-.5C67-.5 69 .8 69 3.5C69 7 65 9 60 13Z" fill="#ff4f9a" stroke="#3a2a4a" stroke-width="2.5" stroke-linejoin="round"/>'
+ +'<path d="M29 43C31 22 43 17 60 17S89 22 91 43Z" fill="#c9ecff" stroke="#3a2a4a" stroke-width="4" stroke-linejoin="round"/>'
+ +'<path d="M40 36C41 28 46 24 54 23" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/>'
+ +'<rect x="10" y="39" width="100" height="44" rx="22" fill="#ff7ab8" stroke="#3a2a4a" stroke-width="4"/>'
+ +'<path d="M26 47H68" stroke="#ffffff80" stroke-width="5" stroke-linecap="round"/>'
+ +'<circle cx="17" cy="60" r="4" fill="#fff3a0"/><circle cx="103" cy="60" r="4" fill="#fff3a0"/>'
+ +'<g class="eye"><ellipse cx="44" cy="59" rx="6.5" ry="8.5" fill="#3a2a4a"/><circle cx="46.5" cy="55.5" r="2.6" fill="#fff"/></g>'
+ +'<g class="eye"><ellipse cx="76" cy="59" rx="6.5" ry="8.5" fill="#3a2a4a"/><circle cx="78.5" cy="55.5" r="2.6" fill="#fff"/></g>'
+ +'<ellipse cx="30" cy="69" rx="7" ry="4" fill="#ff3d8f" opacity=".5"/><ellipse cx="90" cy="69" rx="7" ry="4" fill="#ff3d8f" opacity=".5"/>'
+ +'<path d="M53 68Q60 75 67 68" fill="none" stroke="#3a2a4a" stroke-width="3.5" stroke-linecap="round"/>'
+ +'<circle cx="32" cy="84" r="12" fill="#3a2a4a"/><circle cx="32" cy="84" r="5" fill="#e9dcf5"/>'
+ +'<circle cx="88" cy="84" r="12" fill="#3a2a4a"/><circle cx="88" cy="84" r="5" fill="#e9dcf5"/></svg>'}
+document.getElementById('splM').innerHTML=mascot();
+document.documentElement.style.setProperty('--mascot','url("data:image/svg+xml,'+encodeURIComponent(mascot())+'")');
+</script>
 <div id="map"></div>
 <div id="top">
   <div id="sbox">
     <button id="qb" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
     <svg id="qi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-    <input id="q" type="search" placeholder="Where to?" autocomplete="off" enterkeyhint="search">
+    <input id="q" type="search" placeholder="Where are we going?" autocomplete="off" enterkeyhint="search">
     <button id="qx" class="hide" aria-label="Clear"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></button>
   </div>
   <div id="res" class="hide"></div>
@@ -205,7 +292,7 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
   <div class="sub" id="rAddr"></div>
   <div class="big"><b id="rTime">--</b><span id="rDist"></span><span id="rArr"></span></div>
   <div id="rAlerts"></div>
-  <div class="row"><button class="btn" id="rCancel">Close</button><button class="btn go" id="rGo"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l7.5 18-7.5-4.2-7.5 4.2z"/></svg>Start driving</button></div>
+  <div class="row"><button class="btn" id="rCancel">Close</button><button class="btn go" id="rGo"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l7.5 18-7.5-4.2-7.5 4.2z"/></svg>Let's go</button></div>
 </div>
 <div id="fuelSheet" class="sheet hide">
   <h3>Cheapest fuel near you</h3>
@@ -216,10 +303,11 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
   <div class="fine">Fuel prices come from Service Victoria and are about a day old, so the pump price can differ. Source: Service Victoria Servo Saver.</div>
 </div>
 <div id="layersPanel" class="sheet hide">
-  <h3>What to show</h3>
+  <h3>What should I show you?</h3>
   <div class="sub">Live data from Transport Victoria and VicEmergency</div>
   <div id="lrList"></div>
   <div class="lookrow"><div>Speed limits and cameras<small>Shows the limit while driving and warns about cameras</small></div><div class="seg" id="lpSpd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
+  <div class="lookrow"><div>Cute extras<small>Fun voice lines and a little party when you arrive</small></div><div class="seg" id="lpFun"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="lookrow"><div>Map look<small>Auto turns on night colours after sunset</small></div><div class="seg" id="lpLook"><button data-v="auto">Auto</button><button data-v="day">Day</button><button data-v="night">Night</button></div></div>
   <div class="row" style="margin-top:10px"><button class="btn" id="lpVoice">Voice: on</button><button class="btn go" id="lpClose">Done</button></div>
   <div class="fine" id="lpFuel"></div>
@@ -284,12 +372,12 @@ const KINDS={
   fire:    {label:'Fire',              col:'#ff5722', g:'fire'},
   burn:    {label:'Planned burn',      col:'#8d6e63', g:'fire'},
   rescue:  {label:'Rescue',            col:'#d81b60', g:'plus'},
-  hazmat:  {label:'Hazardous material',col:'#7cb342', g:'warn'},
-  weather: {label:'Weather warning',   col:'#00897b', g:'wind'},
-  emerg:   {label:'Emergency',         col:'#5e35b1', g:'warn'},
+  hazmat:  {label:'Hazardous material',col:'#7cb342', g:'drum'},
+  weather: {label:'Weather warning',   col:'#00897b', g:'storm'},
+  emerg:   {label:'Emergency',         col:'#5e35b1', g:'siren'},
   u_police:{label:'Police',            col:'#1565c0', g:'police', crowd:1},
   u_crash: {label:'Crash',             col:'#e53935', g:'crash',  crowd:1},
-  u_jam:   {label:'Traffic jam',       col:'#c62828', g:'car',    crowd:1},
+  u_jam:   {label:'Traffic jam',       col:'#c62828', g:'jam',    crowd:1},
   u_hazard:{label:'Hazard',            col:'#fb8c00', g:'warn',   crowd:1},
   u_closed:{label:'Road closed',       col:'#b71c1c', g:'closed', crowd:1},
   u_camera:{label:'Speed camera',      col:'#546e7a', g:'camera', crowd:1},
@@ -304,39 +392,85 @@ const GROUPS={
   cams:   {label:'Speed cameras',       short:'Cameras', sub:'Official fixed camera sites in Victoria',        icon:'camfix', on:true}
 };
 const groupList=()=>Object.entries(GROUPS).filter(([g])=>g!=='reports'||FIREBASE_CONFIG);
-function drawGlyph(c,g,s,fg){
-  c.save();c.translate(s/2,s/2);const u=s/64;c.scale(u,u);
-  c.fillStyle=fg||'#fff';c.strokeStyle=fg||'#fff';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';
-  const P=(pts,fill)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();fill?c.fill():c.stroke()};
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function starPath(c,cx,cy,R,r,n){c.beginPath();for(let i=0;i<n*2;i++){const q=i%2?r:R,a=-Math.PI/2+i*Math.PI/n,x=cx+q*Math.cos(a),y=cy+q*Math.sin(a);i?c.lineTo(x,y):c.moveTo(x,y)}c.closePath()}
+function mixCol(a,b,t){const h=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)),A=h(a),B=h(b);return 'rgb('+A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')+')'}
+/* glyphs are drawn around (0,0), sized for a badge of radius 24; fg = ink, bg = badge colour used for cut-outs */
+function drawGlyph(c,g,fg,bg){
+  const F=()=>c.fill(),S=()=>c.stroke(),O=(x,y,r)=>{c.beginPath();c.arc(x,y,r,0,Math.PI*2)};
+  const ink=()=>{c.fillStyle=fg;c.strokeStyle=fg},cut=()=>{c.shadowColor='transparent';c.fillStyle=bg;c.strokeStyle=bg};
+  const line=(pts,w)=>{c.lineWidth=w;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));S()};
+  const poly=pts=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath()};
+  c.lineCap='round';c.lineJoin='round';ink();
+  const carSide=()=>{ink();rr(c,-9,-3,18,7.5,3);F();poly([[-6.5,-2],[-3.5,-8.5],[3.5,-8.5],[7,-2]]);c.lineWidth=2;F();S();
+    cut();poly([[-4.3,-3.2],[-2.6,-6.9],[2.5,-6.9],[4.6,-3.2]]);F();O(-5,4.6,2.7);F();O(5,4.6,2.7);F()};
+  const carFront=(hz)=>{ink();rr(c,-13,-4,26,11,4.5);F();poly([[-9.5,-3],[-6.5,-12],[6.5,-12],[9.5,-3]]);c.lineWidth=3;F();S();
+    rr(c,-12,5,6.5,7,2.5);F();rr(c,5.5,5,6.5,7,2.5);F();
+    cut();poly([[-7.2,-4.2],[-5,-9.8],[5,-9.8],[7.2,-4.2]]);F();O(-8,1.4,2.6);F();O(8,1.4,2.6);F();rr(c,-4,.2,8,2.6,1.3);F();
+    if(hz){ink();for(const s of [-1,1]){line([[s*16,-8],[s*19.5,-11.5]],2.4);line([[s*17,-3],[s*21,-3]],2.4);line([[s*16,2],[s*19.5,5.5]],2.4)}}};
   switch(g){
-    case 'crash': P([[0,-17],[5,-6],[17,-9],[9,1],[16,12],[3,8],[-2,18],[-5,7],[-17,10],[-9,0],[-16,-11],[-4,-6]],1);break;
-    case 'closed': c.fillRect(-14,-4,28,8);break;
-    case 'warn': P([[0,-16],[16,13],[-16,13]],1);c.fillStyle='#000a';c.fillRect(-2,-6,4,11);c.fillRect(-2,8,4,3);break;
-    case 'car': c.fillRect(-15,-4,30,12);P([[-10,-4],[-6,-12],[6,-12],[10,-4]],1);
-      c.fillStyle='#0008';c.beginPath();c.arc(-8,9,4,0,7);c.arc(8,9,4,0,7);c.fill();break;
-    case 'wave': for(const y of [-8,2,12]){c.beginPath();c.moveTo(-16,y);c.bezierCurveTo(-10,y-7,-6,y-7,0,y);c.bezierCurveTo(6,y+7,10,y+7,16,y);c.stroke()}break;
-    case 'cone': P([[-4,-17],[4,-17],[13,12],[-13,12]],1);c.fillRect(-17,12,34,5);c.fillStyle='#0007';c.fillRect(-8,-4,16,5);break;
-    case 'star': {const pts=[];for(let i=0;i<10;i++){const r=i%2?7:17,a=-Math.PI/2+i*Math.PI/5;pts.push([r*Math.cos(a),r*Math.sin(a)])}P(pts,1);break}
-    case 'fire': c.beginPath();c.moveTo(0,-18);c.bezierCurveTo(10,-6,15,0,13,8);c.bezierCurveTo(11,16,4,18,0,18);c.bezierCurveTo(-4,18,-11,16,-13,8);
-      c.bezierCurveTo(-14,1,-8,-3,-6,-10);c.bezierCurveTo(-3,-4,-2,-2,0,-1);c.bezierCurveTo(2,-7,1,-12,0,-18);c.fill();break;
-    case 'plus': c.fillRect(-4,-14,8,28);c.fillRect(-14,-4,28,8);break;
-    case 'police': P([[0,-18],[15,-12],[13,5],[0,18],[-13,5],[-15,-12]],1);c.fillStyle='#0007';
-      {const pts=[];for(let i=0;i<10;i++){const r=i%2?3.5:8,a=-Math.PI/2+i*Math.PI/5;pts.push([r*Math.cos(a),r*Math.sin(a)-1])}P(pts,1)}break;
-    case 'camera': c.fillRect(-16,-8,32,21);c.fillRect(-6,-14,12,7);c.fillStyle='#0008';c.beginPath();c.arc(0,2,7,0,7);c.fill();
-      c.fillStyle=fg||'#fff';c.beginPath();c.arc(0,2,3,0,7);c.fill();break;
-    case 'wind': c.beginPath();c.moveTo(-16,-6);c.lineTo(8,-6);c.arc(8,-11,5,Math.PI/2,-Math.PI/2,true);c.moveTo(-16,3);c.lineTo(12,3);c.moveTo(-16,11);c.lineTo(4,11);c.stroke();break;
+    case 'crash':
+      c.save();c.translate(-8.5,4);c.rotate(-.42);carSide();c.restore();
+      c.save();c.translate(8.5,4);c.scale(-1,1);c.rotate(-.42);carSide();c.restore();
+      ink();starPath(c,0,-11.5,6.5,2.8,7);F();
+      line([[-8,-14],[-10.5,-17]],2);line([[8,-14],[10.5,-17]],2);break;
+    case 'closed': ink();O(0,0,15.5);F();cut();rr(c,-10.5,-3.3,21,6.6,3.3);F();break;
+    case 'warn': ink();poly([[0,-14],[14.5,11],[-14.5,11]]);c.lineWidth=5;F();S();
+      cut();rr(c,-1.9,-6.5,3.8,10.5,1.9);F();O(0,7.4,2.2);F();break;
+    case 'car': carFront(1);break;
+    case 'jam':
+      c.save();c.translate(6,-5);c.scale(.62,.62);carFront(0);c.restore();
+      c.save();c.translate(-4,3);c.scale(.78,.78);cut();rr(c,-15.5,-15,31,30,7);F();carFront(0);c.restore();
+      ink();c.fillStyle='#ff5252';O(-10.2,4.1,1.6);F();O(2.2,4.1,1.6);F();break;
+    case 'wave': ink();c.beginPath();c.moveTo(0,-16);c.bezierCurveTo(3.5,-11,7,-7.5,7,-4.5);c.arc(0,-4.5,7,0,Math.PI);c.bezierCurveTo(-7,-7.5,-3.5,-11,0,-16);F();
+      cut();O(-2.6,-4.2,1.6);F();ink();
+      for(const y of [7,13.5]){c.lineWidth=3.2;c.beginPath();c.moveTo(-15,y);for(let x=-15;x<=15;x+=1)c.lineTo(x,y+Math.sin((x+15)/30*Math.PI*3)*-2.2);S()}break;
+    case 'cone': ink();poly([[-3,-14],[3,-14],[10,9],[-10,9]]);c.lineWidth=3;F();S();rr(c,-14.5,9,29,5,2.5);F();
+      cut();poly([[-5.6,-6],[5.6,-6],[6.8,-2],[-6.8,-2]]);F();poly([[-8.1,2],[8.1,2],[9.2,5.6],[-9.2,5.6]]);F();break;
+    case 'star': ink();starPath(c,0,1,13.5,6.3,5);c.lineWidth=3;F();S();
+      starPath(c,13,-12,4.5,1.4,4);F();starPath(c,-13.5,-9,3.2,1,4);F();
+      cut();O(-3.5,0,1.5);F();O(3.5,0,1.5);F();c.lineWidth=1.4;c.beginPath();c.arc(0,3,3,.15*Math.PI,.85*Math.PI);S();break;
+    case 'fire': ink();c.beginPath();c.moveTo(0,-16);c.bezierCurveTo(9,-7,14,-1,12,6);c.bezierCurveTo(10.5,13,5,16,0,16);c.bezierCurveTo(-5,16,-10.5,13,-12,6);
+      c.bezierCurveTo(-13,0,-9.5,-4.5,-6.5,-9.5);c.bezierCurveTo(-4.5,-5,-3,-3.5,-1,-2.5);c.bezierCurveTo(1.5,-7,1.5,-11,0,-16);F();
+      cut();c.beginPath();c.moveTo(0,1.5);c.bezierCurveTo(4,5.5,6,8.5,5,11.5);c.bezierCurveTo(4.2,14,2.2,15,0,15);c.bezierCurveTo(-2.2,15,-4.2,14,-5,11.5);c.bezierCurveTo(-6,8.5,-4,5.5,0,1.5);F();break;
+    case 'plus': ink();rr(c,-5,-15,10,30,3.5);F();rr(c,-15,-5,30,10,3.5);F();break;
+    case 'police': ink();c.beginPath();c.moveTo(0,-16);c.quadraticCurveTo(7,-11.5,13.5,-12);c.bezierCurveTo(14,2,9,11,0,16.5);c.bezierCurveTo(-9,11,-14,2,-13.5,-12);c.quadraticCurveTo(-7,-11.5,0,-16);
+      c.lineWidth=2;F();S();cut();starPath(c,0,-.5,7.5,3.2,5);F();break;
+    case 'siren': ink();c.beginPath();c.arc(0,3,9,Math.PI,0);c.closePath();F();rr(c,-12.5,3,25,6.5,2.5);F();
+      cut();rr(c,-4.5,-3,2.6,5,1.3);F();ink();
+      line([[0,-10],[0,-15.5]],2.6);line([[-9,-7],[-12.5,-11]],2.6);line([[9,-7],[12.5,-11]],2.6);line([[-13,1],[-17.5,0]],2.6);line([[13,1],[17.5,0]],2.6);break;
+    case 'drum': ink();rr(c,-9.5,-14,19,28,3.5);F();cut();rr(c,-9.5,-6.5,19,2,1);F();rr(c,-9.5,4.5,19,2,1);F();
+      c.beginPath();c.moveTo(0,-3.5);c.bezierCurveTo(2,-.8,3,.6,3,1.6);c.arc(0,1.6,3,0,Math.PI);c.bezierCurveTo(-3,.6,-2,-.8,0,-3.5);F();break;
+    case 'camera':
+      c.save();c.translate(-1.5,0);ink();
+      rr(c,-1.9,1,3.8,14,1.9);F();rr(c,-7.5,13.5,15,3.8,1.9);F();
+      rr(c,-13,-12,23,14,4);F();rr(c,-14.5,-14.5,26,4.2,2.1);F();
+      cut();O(-5.5,-4.8,4.8);F();ink();O(-5.5,-4.8,2.3);F();cut();O(-6.4,-5.8,.8);F();rr(c,2.2,-8.2,5,4.2,1.2);F();
+      ink();line([[13.5,-11],[17.5,-14.5]],2.4);line([[14.5,-5.5],[19,-5.5]],2.4);line([[13.5,0],[17.5,3.5]],2.4);c.restore();break;
+    case 'storm': ink();O(-6,-3,7);F();O(3,-6.5,8.5);F();O(9.5,-1,6);F();rr(c,-13,-3,28.5,9.5,4.7);F();
+      const bolt=[[2,3],[-4.5,12],[-.5,12],[-3.5,18.5],[6.5,8],[2.5,8],[5.5,3]];
+      cut();poly(bolt);c.lineWidth=3.5;S();ink();poly(bolt);F();break;
   }
-  c.restore();
 }
-function makeIcon(kind,size){
-  const k=KINDS[kind],cv=document.createElement('canvas');cv.width=cv.height=size;const c=cv.getContext('2d');
-  const r=size/2-size*.12,cy=size/2-size*.03;
-  c.save();c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=size*.08;c.shadowOffsetY=size*.035;
-  c.beginPath();c.arc(size/2,cy,r,0,7);c.fillStyle=k.col;c.fill();c.restore();
-  const gr=c.createLinearGradient(0,cy-r,0,cy+r);gr.addColorStop(0,'rgba(255,255,255,.22)');gr.addColorStop(.55,'rgba(255,255,255,0)');
-  c.beginPath();c.arc(size/2,cy,r,0,7);c.fillStyle=gr;c.fill();
-  c.lineWidth=size*(k.crowd?.09:.065);c.strokeStyle=k.crowd?'#33ccff':(k.dark?'#5d4a00':'#fff');c.stroke();
-  c.save();c.translate(0,cy-size/2);drawGlyph(c,k.g,size*.8,k.dark?'#2b2200':null);c.restore();return cv;
+/* cute sticker badge; pin=true adds a pointer at the bottom for the map (anchored at the tip) */
+function makeIcon(kind,size,pin){
+  const k=KINDS[kind],cv=document.createElement('canvas');cv.width=cv.height=size;const c=cv.getContext('2d'),Z=size/64;c.scale(Z,Z);
+  const cx=32,cy=pin?25:32,R=pin?20:24.5,bw=3.6,tip=pin?59:0;
+  const shape=r=>{c.beginPath();if(!pin){c.arc(cx,cy,r,0,Math.PI*2);return}
+    const d=tip-cy,t=Math.acos(Math.min(.99,r/d));c.arc(cx,cy,r,Math.PI/2+t,Math.PI*2.5-t);c.lineTo(cx,tip-(R+bw-r)*1.1);c.closePath()};
+  c.save();c.shadowColor='rgba(40,12,70,.42)';c.shadowBlur=4.5*Z;c.shadowOffsetY=2.2*Z;
+  shape(R+bw);c.fillStyle='#fff';c.fill();c.restore();
+  shape(R+bw);c.lineWidth=.9;c.strokeStyle='rgba(30,10,50,.22)';c.stroke();
+  const gr=c.createRadialGradient(cx-7,cy-9,1,cx,cy,R+6);gr.addColorStop(0,mixCol(k.col,'#ffffff',.38));gr.addColorStop(.7,k.col);gr.addColorStop(1,mixCol(k.col,'#000000',.14));
+  shape(R);c.fillStyle=gr;c.fill();
+  c.save();shape(R);c.clip();c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.ellipse(cx-R*.45,cy-R*.56,R*.24,R*.12,-.6,0,Math.PI*2);c.fill();c.restore();
+  c.save();c.translate(cx,cy);const gs=R/24;c.scale(gs,gs);
+  if(!k.dark){c.shadowColor='rgba(0,0,0,.25)';c.shadowBlur=1.6*Z;c.shadowOffsetY=1.1*Z}
+  drawGlyph(c,k.g,k.dark?'#3a2900':'#fff',k.col);c.restore();
+  if(k.crowd){const bx=cx+R*.78,by=cy-R*.78;c.save();c.shadowColor='rgba(0,0,0,.3)';c.shadowBlur=2*Z;c.beginPath();c.arc(bx,by,8,0,Math.PI*2);c.fillStyle='#fff';c.fill();c.restore();
+    c.beginPath();c.arc(bx,by,6.3,0,Math.PI*2);c.fillStyle='#29b6f6';c.fill();c.fillStyle='#fff';
+    c.beginPath();c.arc(bx,by-1.8,2.1,0,Math.PI*2);c.fill();c.beginPath();c.arc(bx,by+4.2,3.6,Math.PI,0);c.fill()}
+  return cv;
 }
 const ICON_URL={};
 for(const k in KINDS){try{ICON_URL[k]=makeIcon(k,64).toDataURL()}catch(e){ICON_URL[k]=''}}
@@ -360,6 +494,16 @@ function ago(ms){if(!ms||isNaN(ms))return '';const m=Math.round((Date.now()-ms)/
 function toast(msg,ms){const t=$('toast');t.textContent=msg;t.classList.remove('hide');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.add('hide'),ms||3500)}
 const store={get(k,d){try{const v=localStorage.getItem('roadie.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('roadie.'+k,JSON.stringify(v))}catch(e){}}};
 const RAD=Math.PI/180;
+let funOn=store.get('fun',true);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function hideSplash(){const s=$('splash');if(!s||s.classList.contains('out'))return;s.classList.add('out');setTimeout(()=>s.remove(),500)}
+function celebrate(name){if(!funOn){toast('You have arrived',4000);return}
+  const old=$('yay');if(old)old.remove();const o=document.createElement('div');o.id='yay';
+  o.innerHTML='<div class="card">'+mascot()+'<h2>You made it!</h2><p>'+esc(name&&name!=='Dropped pin'?'Welcome to '+name+'. Nice driving!':'Nice driving!')+'</p><button class="btn go" style="width:100%">Yay!</button></div>';
+  const cols=['#ff7ab8','#9b6bff','#5ff2b0','#ffd84d','#5ad6ff','#ff9f43'];
+  for(let i=0;i<48;i++){const c=document.createElement('i');c.className='cf';c.style.left=(Math.random()*100)+'%';c.style.background=cols[i%cols.length];
+    c.style.animationDuration=(2.2+Math.random()*2.2)+'s';c.style.animationDelay=(Math.random()*.9)+'s';if(i%3===0)c.style.borderRadius='50%';o.appendChild(c)}
+  document.body.appendChild(o);const close=()=>o.remove();o.querySelector('button').onclick=close;o.onclick=e=>{if(e.target===o)close()};setTimeout(close,9000)}
 function proj(lat0){const kx=111320*Math.cos(lat0*RAD),ky=110540;return p=>[p[0]*kx,p[1]*ky]}
 function haversine(a,b){const dLat=(b[1]-a[1])*RAD,dLon=(b[0]-a[0])*RAD,la=a[1]*RAD,lb=b[1]*RAD;
   const h=Math.sin(dLat/2)**2+Math.cos(la)*Math.cos(lb)*Math.sin(dLon/2)**2;return 12742000*Math.asin(Math.sqrt(h))}
@@ -479,10 +623,10 @@ function parseCol(v){if(typeof v!=='string')return null;let x=v.trim().toLowerCa
 function nightCol(v,role){if(Array.isArray(v))return v.map(x=>nightCol(x,role));
   if(v&&typeof v==='object'){const o={};for(const k in v)o[k]=nightCol(v[k],role);return o}
   const c=parseCol(v);if(!c)return v;let {h,s,l,a}=c;
-  switch(role){case 'text':l=.92-l*.6;s*=.6;break;case 'halo':l=.07;h=215;s=.2;break;
-    case 'road':l=.15+l*.17;s=Math.min(s*.25,.22);break;case 'casing':l=.055;h=215;s=.15;break;
-    case 'water':l=.1;s=Math.min(s,.45);break;case 'building':l=.19+(l-.8)*.3;h=215;s=.12;break;
-    default:l=.065+(1-l)*.5;if(s<.35){h=215;s=.16}else s*=.45}
+  switch(role){case 'text':l=.92-l*.6;s*=.6;break;case 'halo':l=.08;h=255;s=.25;break;
+    case 'road':l=.15+l*.17;s=Math.min(s*.25,.22);break;case 'casing':l=.06;h=255;s=.2;break;
+    case 'water':l=.1;s=Math.min(s,.45);break;case 'building':l=.2+(l-.8)*.3;h=258;s=.16;break;
+    default:l=.075+(1-l)*.5;if(s<.35){h=255;s=.22}else s*=.45}
   l=Math.max(0,Math.min(1,l));return 'hsla('+Math.round(h)+','+Math.round(s*100)+'%,'+Math.round(l*100)+'%,'+(+a.toFixed(2))+')'}
 function nightStyle(b){const st=JSON.parse(JSON.stringify(b));
   for(const l of st.layers){const p=l.paint;if(!p)continue;
@@ -493,6 +637,15 @@ function nightStyle(b){const st=JSON.parse(JSON.stringify(b));
         :(l.type==='line'&&/^(road|bridge|tunnel)_/.test(l.id)&&!/rail|hatching|path|pedestrian/.test(l.id))?(/casing/.test(l.id)?'casing':'road'):'gen';
       p[k]=nightCol(p[k],role)}}
   return st}
+function dayStyle(b){const st=JSON.parse(JSON.stringify(b));/* pastel day colours */
+  for(const l of st.layers){const p=l.paint,id=l.id||'';if(!p)continue;
+    if(l.type==='background')p['background-color']='#fffafc';
+    else if(l.type==='fill'&&/water/.test(id))p['fill-color']='#a9dcff';
+    else if(l.type==='line'&&/waterway/.test(id))p['line-color']='#a9dcff';
+    else if(l.type==='fill'&&/park|grass|wood|forest|scrub|wetland|landcover/.test(id)&&!/ice|sand/.test(id))p['fill-color']=/wood|forest/.test(id)?'#bfeccb':'#cdf3d6';
+    else if(l.type==='fill-extrusion')p['fill-extrusion-color']='#eee0f6';
+    else if(l.type==='fill'&&/^building/.test(id))p['fill-color']='#eee0f6'}
+  return st}
 function sunUp(ll){/* rough sunrise and sunset for where you are, good to a few minutes */
   const t=Date.now(),d=new Date(t),lat=ll[1]*RAD,n=Math.floor((t-Date.UTC(d.getUTCFullYear(),0,0))/864e5);
   const dec=-23.44*RAD*Math.cos(2*Math.PI/365*(n+10)),B=2*Math.PI/365*(n-81),eot=9.87*Math.sin(2*B)-7.53*Math.cos(B)-1.5*Math.sin(B);
@@ -502,18 +655,18 @@ function sunUp(ll){/* rough sunrise and sunset for where you are, good to a few 
   return dm>-(H+10)&&dm<H+20}
 const isNight=()=>look==='night'||(look==='auto'&&!sunUp(me?me.ll:map.getCenter().toArray()));
 async function applyLook(force){const want=isNight()?'night':'day';if(want===lookNow&&!force)return;lookNow=want;
-  document.body.classList.toggle('day',want==='day');const tm=document.querySelector('meta[name=theme-color]');if(tm)tm.content=want==='day'?'#eef1f4':'#0f1720';
+  document.body.classList.toggle('day',want==='day');const tm=document.querySelector('meta[name=theme-color]');if(tm)tm.content=want==='day'?'#fdf2f7':'#171329';
   if(!baseStyle){try{baseStyle=(await getJSON(MAP_STYLE,null,15000)).json}catch(e){baseStyle=null}}
   if(lookNow!==want)return;
-  const st=baseStyle?(want==='night'?nightStyle(baseStyle):JSON.parse(JSON.stringify(baseStyle))):MAP_BACKUP[want];
+  const st=baseStyle?(want==='night'?nightStyle(baseStyle):dayStyle(baseStyle)):MAP_BACKUP[want];
   mapReady=false;map.setStyle(st,{diff:false})}
-const RCOL={night:{line:'#33ccff',cas:'#05415d',done:'#5a6774'},day:{line:'#1a8cff',cas:'#0b4f99',done:'#a3afbb'}};
+const RCOL={night:{line:'#a07cff',cas:'#3b1f8f',done:'#5d5478'},day:{line:'#8a5cff',cas:'#4a23b8',done:'#cbb8d6'}};
 function routeGrad(f){const rc=RCOL[lookNow||'night'];f=Math.min(.9999,Math.max(.00001,f||0));return ['step',['line-progress'],rc.done,f,rc.line]}
 function setTraveled(f){if(map.getLayer('route-line'))map.setPaintProperty('route-line','line-gradient',routeGrad(f))}
 function labelLayerId(){/* our route goes above roads and buildings but under street names */
   const L=(map.getStyle()||{}).layers||[];let last=-1;L.forEach((l,i)=>{if(l.type!=='symbol')last=i});return L[last+1]?L[last+1].id:undefined}
 function addAppLayers(){if(map.getSource('pts'))return;const before=labelLayerId(),rc=RCOL[lookNow||'night'];
-  for(const k in KINDS)if(!map.hasImage('k-'+k))map.addImage('k-'+k,makeIcon(k,80).getContext('2d').getImageData(0,0,80,80),{pixelRatio:2});
+  for(const k in KINDS)if(!map.hasImage('k-'+k))map.addImage('k-'+k,makeIcon(k,80,true).getContext('2d').getImageData(0,0,80,80),{pixelRatio:2});
   for(const s of ['polys','lines','pts'])map.addSource(s,{type:'geojson',data:fc([])});
   map.addSource('route',{type:'geojson',lineMetrics:true,data:fc([])});
   map.addLayer({id:'polys-fill',type:'fill',source:'polys',paint:{'fill-color':['get','col'],'fill-opacity':.18}},before);
@@ -523,7 +676,7 @@ function addAppLayers(){if(map.getSource('pts'))return;const before=labelLayerId
   map.addLayer({id:'lines',type:'line',source:'lines',minzoom:9,layout:{'line-join':'round','line-cap':'round'},
     paint:{'line-color':['get','col'],'line-width':['interpolate',['linear'],['zoom'],9,2,16,7],'line-opacity':.85}},before);
   const symLayout=size=>({'icon-image':['concat','k-',['get','kind']],'icon-size':['interpolate',['linear'],['zoom'],8,size*.55,14,size],
-    'icon-allow-overlap':['step',['zoom'],false,14,true],'symbol-sort-key':['get','prio'],'icon-padding':1});
+    'icon-allow-overlap':['step',['zoom'],false,14,true],'symbol-sort-key':['get','prio'],'icon-padding':1,'icon-anchor':'bottom','icon-offset':[0,3]});
   map.addLayer({id:'pts-works',type:'symbol',source:'pts',minzoom:11.5,filter:['==',['get','grp'],'works'],layout:symLayout(.85)});
   map.addLayer({id:'pts-main',type:'symbol',source:'pts',filter:['!=',['get','grp'],'works'],layout:symLayout(1)})}
 map.on('styleimagemissing',e=>{try{if(!map.hasImage(e.id))map.addImage(e.id,{width:1,height:1,data:new Uint8Array(4)})}catch(x){}});
@@ -581,6 +734,8 @@ function renderLayers(){
   $('lpVoice').textContent='Voice: '+(voiceOn?'on':'off');
   $('lpSpd').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',(b.dataset.v==='1')===spdWarn);
     b.onclick=()=>{spdWarn=b.dataset.v==='1';store.set('spdWarn',spdWarn);renderLayers();if(spdWarn&&route.geo&&!route.limits)loadRouteLimits()}});
+  $('lpFun').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',(b.dataset.v==='1')===funOn);
+    b.onclick=()=>{funOn=b.dataset.v==='1';store.set('fun',funOn);renderLayers();if(funOn)toast('Yay, cute extras on!',1800)}});
   $('lpFuel').innerHTML=fuelOn()?'Fuel prices are on. Data: Service Victoria Servo Saver, about a day old.'
     :'Fuel prices are not set up yet. They need a free key from Service Victoria (Servo Saver Public API).';
   $('lpLook').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.v===look);b.onclick=()=>{look=b.dataset.v;store.set('look',look);renderLayers();applyLook()}})}
@@ -602,8 +757,8 @@ function showPopup(i,ll){if(curPopup)curPopup.remove();
 /* ===================== my location ===================== */
 let me=null;
 const meEl=document.createElement('div');meEl.id='me';
-meEl.innerHTML='<div class="dot"></div><svg class="arr" viewBox="0 0 56 56"><defs><linearGradient id="pkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#62dcff"/><stop offset="1" stop-color="#0a7fd0"/></linearGradient></defs>'
-  +'<circle cx="28" cy="28" r="26" fill="#1a9bff26"/><path d="M28 6 L44 46 L28 37.5 L12 46 Z" fill="url(#pkg)" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><path d="M28 6 L28 37.5 L12 46 Z" fill="#ffffff22"/></svg>';
+meEl.innerHTML='<div class="ring"></div>'+mascot('pal')+'<svg class="arr" viewBox="0 0 56 56"><defs><linearGradient id="pkg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa3d3"/><stop offset="1" stop-color="#ff3d96"/></linearGradient></defs>'
+  +'<circle cx="28" cy="28" r="26" fill="#ff5ca826"/><path d="M28 6 L44 46 L28 37.5 L12 46 Z" fill="url(#pkg)" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><path d="M28 6 L28 37.5 L12 46 Z" fill="#ffffff22"/></svg>';
 const meMarker=new maplibregl.Marker({element:meEl,rotationAlignment:'map',pitchAlignment:'viewport'});
 let meShown=false;
 function setMe(pos){const c=pos.coords;const ll=[c.longitude,c.latitude];
@@ -644,7 +799,7 @@ function placeLabel(p,pq){const st=STATE_AB[p.state]||p.state||'';
 function rowHtml(k,i,L,ll){const d=me?fmtDist(haversine(me.ll,ll)):'';
   return '<button class="sr" data-k="'+k+'" data-i="'+i+'"><i>'+(k==='r'?ICO_REC:ICO_PIN)+'</i><div class="ln"><div class="tx"><b>'+esc(L.name)+'</b>'+(L.addr?'<small>'+esc(L.addr)+'</small>':'')+'</div>'+(d?'<span class="dd">'+d+'</span>':'')+'</div></button>'}
 function showResults(msg){
-  $('res').innerHTML=qRec.map((r,i)=>rowHtml('r',i,r,r.ll)).join('')+qPl.map((x,i)=>rowHtml('p',i,x.L,x.ll)).join('')+(msg?'<div class="msg">'+esc(msg)+'</div>':'');
+  $('res').innerHTML=qRec.map((r,i)=>rowHtml('r',i,r,r.ll)).join('')+qPl.map((x,i)=>rowHtml('p',i,x.L,x.ll)).join('')+(msg?(msg==='HELLO'?'<div class="hello">'+mascot()+'<b>Where are we off to?</b><small>Try a place or an address, like 4/5 Houston St Epping</small></div>':'<div class="msg">'+esc(msg)+'</div>'):'');
   $('res').classList.remove('hide');
   $('res').querySelectorAll('.sr').forEach(b=>b.onclick=()=>{const x=b.dataset.k==='r'?qRec[+b.dataset.i]:Object.assign({},qPl[+b.dataset.i].L,{ll:qPl[+b.dataset.i].ll});
     addRecent(x);exitSearch();planTo({name:x.name,addr:x.addr,ll:x.ll})})}
@@ -652,7 +807,7 @@ const normQ=s=>s.toLowerCase().replace(/[^a-z0-9\/ ]+/g,' ').trim();
 function matchRecents(v){const toks=normQ(v).split(/\s+/).filter(Boolean);
   return recents.filter(r=>{const h=normQ(r.name+' '+r.addr+' '+r.name.replace(/\b(St|Rd|Ave|Ct|Dr|Pl|Cres|Pde|Hwy|Tce|Cl|Gr)$/,m=>Object.keys(ST_AB).find(k=>ST_AB[k]===m)||m));return toks.every(t=>h.includes(t))}).slice(0,4)}
 function onQuery(){if(nav.on)return;document.body.classList.add('srch');const v=$('q').value;$('qx').classList.toggle('hide',!v);clearTimeout(qTimer);qSeq++;
-  if(!v.trim()){qRec=recents.slice(0,10);qPl=[];showResults(qRec.length?'':'Search for a place or an address, like 4/5 Houston St Epping');return}
+  if(!v.trim()){qRec=recents.slice(0,10);qPl=[];showResults(qRec.length?'':'HELLO');return}
   qRec=matchRecents(v);const pq=parseQ(v);
   if(!/[a-z]{2}/i.test(pq.q)){qPl=[];showResults(qRec.length?'':'Keep typing the street name');return}
   showResults('');qTimer=setTimeout(()=>search(v),300)}
@@ -736,14 +891,14 @@ function renderRouteSheet(){const rt=route.data;if(!rt)return;
   $('rTime').textContent=fmtDur(rt.duration);$('rDist').textContent=fmtDist(rt.distance);
   $('rArr').textContent='Arrive '+clock(new Date(Date.now()+rt.duration*1000));
   const a=route.alerts;
-  if(!a.length){$('rAlerts').innerHTML='<p class="okmsg">No reported crashes, hazards or works on this route.</p>';return}
+  if(!a.length){$('rAlerts').innerHTML='<div class="buddy">'+mascot()+'<div class="bub okmsg">No crashes, hazards or works on this route. Enjoy the drive!</div></div>';return}
   const cnt={};a.forEach(x=>{const l=alertLabel(x.i);cnt[l]=(cnt[l]||0)+1});
   const plu=(w,n)=>n<2?w:(/(s|sh|ch|x)$/i.test(w)?w+'es':w+'s');
   const nc=a.filter(x=>x.i.src==='cam').length,nh=a.length-nc,hb=[];
   if(nh)hb.push(nh+' '+plu('alert',nh));if(nc)hb.push(nc+' speed '+plu('camera',nc));
   const dsp=a.slice().sort((x,y)=>((x.i.src==='cam')-(y.i.src==='cam'))||x.along-y.along);
   const det=Object.keys(cnt).length>1?': '+Object.entries(cnt).map(([k,v])=>v+' '+plu(k.toLowerCase(),v)).join(', '):'';
-  $('rAlerts').innerHTML='<div class="wsub">'+hb.join(' and ')+' on your route'+det+'</div>'
+  $('rAlerts').innerHTML='<div class="buddy">'+mascot()+'<div class="bub wsub">Heads up! '+hb.join(' and ')+' on your route'+det+'. I will warn you on the way.</div></div>'
     +dsp.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertIcon(x.i)]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
   $('rAlerts').querySelectorAll('.ra').forEach(b=>b.onclick=()=>{const x=dsp[+b.dataset.n];map.flyTo({center:x.i.pt,zoom:15});showPopup(x.i,x.i.pt)})}
 $('rCancel').onclick=()=>{clearRoute();hideSheets();$('q').value='';$('qx').classList.add('hide')};
@@ -836,7 +991,7 @@ async function startNav(){if(!route.data)return;
   if(bgWatch!=null){navigator.geolocation.clearWatch(bgWatch);bgWatch=null}
   const nc=route.alerts.filter(a=>a.i.src==='cam').length,n=route.alerts.length-nc;nav.spoken[0]={far:1,near:1,now:1};
   const bits=[];if(n)bits.push(n+' alert'+(n>1?'s':''));if(nc)bits.push(nc+' speed camera'+(nc>1?'s':''));
-  say((route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(bits.length?bits.join(' and ')+' on your route.':''),true);
+  say((funOn?pick(["Buckle up, let's go!",'Off we go!',"Let's roll!",'Road trip time!'])+' ':'')+(route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(bits.length?bits.join(' and ')+' on your route.':''),true);
   updateBanner();
   nav.watch=navigator.geolocation.watchPosition(onFix,e=>{if(e.code===1){toast(locBlockedMsg(),9000);stopNav()}},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
   try{if('wakeLock' in navigator)nav.wake=await navigator.wakeLock.request('screen')}catch(e){}
@@ -872,7 +1027,8 @@ async function onFix(pos){
   updateRoadInfo((cur&&cur.s&&cur.s.name)||'');
   if(!route.limits||nav.off>=2)locateLimit();
   showSpeed();renderRoadbar();checkMobileCam();
-  if(g.total-nav.progress<30&&n.d<60){say('You have arrived'+(route.dest&&route.dest.name!=='Dropped pin'?' at '+route.dest.name:''),true);toast('You have arrived',4000);stopNav(true)}}
+  if(g.total-nav.progress<30&&n.d<60){const dn=route.dest&&route.dest.name,at=dn&&dn!=='Dropped pin'?' at '+dn:'';
+    say(funOn?'You made it'+at+'! Nice driving.':'You have arrived'+at,true);stopNav(true);celebrate(dn)}}
 function updateBanner(){const g=route.geo;if(!g)return;const p=nav.progress;
   let k=g.steps.findIndex(x=>x.at>p+5&&!x.quiet);if(k<0)k=g.steps.length-1;const st=g.steps[k];const dist=Math.max(0,st.at-p);
   if(updateBanner.st!==st){updateBanner.st=st;$('bArrow').innerHTML=st.arrow;$('bText').textContent=st.text;
@@ -1012,7 +1168,7 @@ function showSpeed(){
   if(hot&&!overSt.on){overSt.on=true;
     if(Date.now()-overSt.beep>30000){overSt.beep=Date.now();beep(880,140);beep(660,160,.05)}
     if(sp>kmh+10&&Date.now()-overSt.voice>60000){overSt.voice=Date.now();say('Speed limit '+kmh)}}
-  if(!hot)overSt.on=false;
+  if(!hot){if(overSt.on&&funOn&&Date.now()-overSt.voice<120000&&Date.now()-(overSt.thx||0)>300000){overSt.thx=Date.now();say('Thanks for slowing down')}overSt.on=false}
   return kmh;
 }
 /* ---- the strip under the turn banner ---- */
@@ -1131,7 +1287,7 @@ async function sendReport(type){if(!FB||!fbUser){toast('Driver reports are not c
   if(!ll){if(!me||Date.now()-me.t>60000){const m=await locateOnce(false);if(!m){toast('Turn on location to report where you are',4500);return}}ll=me.ll}
   const f=FB.fs,t=REPORT_TYPES.find(x=>x[0]===type),name=$('repName').value.trim().slice(0,20),note=$('repNote').value.trim().slice(0,120);
   store.set('name',name);closeReport();$('repNote').value='';
-  toast('Thanks! '+t[1]+' is on the map for '+fmtDur(t[2]*60),3500);
+  toast((funOn?'Thanks, you star! ':'Thanks! ')+t[1]+' is on the map for '+fmtDur(t[2]*60),3500);
   try{await f.addDoc(f.collection(FB.db,'reports'),{type,lat:+ll[1].toFixed(6),lng:+ll[0].toFixed(6),note,by:fbUser.uid,name:name||'A driver',
       at:f.serverTimestamp(),exp:f.Timestamp.fromMillis(Date.now()+t[2]*60000),up:0,down:0})}
   catch(e){toast('Your report did not send ('+fbErr(e)+')',5000)}}
@@ -1163,6 +1319,7 @@ document.addEventListener('visibilitychange',async()=>{if(document.visibilitySta
   if(nav.on&&'wakeLock' in navigator){try{nav.wake=await navigator.wakeLock.request('screen')}catch(e){}}});
 if(navigator.permissions&&navigator.permissions.query)navigator.permissions.query({name:'geolocation'}).then(s=>{if(s.state==='granted')locateOnce(!localStorage.getItem('roadie.center'))}).catch(()=>{});
 if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+map.once('load',()=>setTimeout(hideSplash,250));setTimeout(hideSplash,3000);
 </script>
 </body>
 </html>
