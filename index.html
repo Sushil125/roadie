@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Roadie - Melbourne road alerts</title>
+<meta name="theme-color" content="#0f1720">
+<meta name="description" content="Live crashes, hazards, flooded roads, roadworks and emergencies around Melbourne, with turn by turn directions.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+:root{--bg:#0f1720;--card:#17212b;--card2:#1f2b38;--txt:#e9f1f7;--mut:#8fa3b5;--acc:#33ccff;--acc2:#0aa4d8;--red:#ff4d4f;--ok:#3ddc84;
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#map{position:fixed;inset:0}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.hide{display:none!important}
+#top{position:fixed;left:10px;right:10px;top:calc(10px + var(--st));z-index:5}
+#sbox{display:flex;align-items:center;background:var(--card);border-radius:16px;box-shadow:0 6px 20px #0008;padding:4px 6px 4px 14px;gap:6px}
+#sbox svg{flex:none;opacity:.7}
+#q{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:16px;padding:10px 0}
+#q::placeholder{color:var(--mut)}
+#qx{width:34px;height:34px;border-radius:50%;font-size:20px;color:var(--mut)}
+#res{margin-top:6px;background:var(--card);border-radius:14px;box-shadow:0 6px 20px #0008;overflow:hidden;max-height:55vh;overflow-y:auto}
+#res button{display:block;width:100%;text-align:left;padding:11px 14px;border-bottom:1px solid #ffffff10}
+#res button:last-child{border:0}
+#res b{display:block;font-weight:600}
+#res small{color:var(--mut)}
+#chips{display:flex;gap:5px;margin-top:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+#chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:4px;background:var(--card);border-radius:20px;padding:5px 8px 5px 5px;font-size:12.5px;box-shadow:0 3px 10px #0006;opacity:.55;border:1.5px solid transparent}
+.chip.on{opacity:1;border-color:#ffffff22}
+.chip i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:11px}
+.chip em{font-style:normal;color:var(--mut);font-size:12px}
+#fabs{position:fixed;right:10px;bottom:calc(48px + var(--sb));z-index:4;display:flex;flex-direction:column;gap:10px}
+.fab{width:50px;height:50px;border-radius:50%;background:var(--card);box-shadow:0 4px 14px #0009;display:grid;place-items:center}
+#status{position:fixed;left:10px;bottom:calc(40px + var(--sb));z-index:3;background:#17212bd9;border-radius:12px;padding:6px 10px;font-size:12px;color:var(--mut);max-width:calc(100% - 90px)}
+#status b{color:var(--txt);font-weight:600}
+#status .err{color:#ffb4a8}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-radius:20px 20px 0 0;box-shadow:0 -8px 30px #000a;padding:14px 16px calc(14px + var(--sb))}
+.sheet h3{margin:0 0 2px;font-size:18px}
+.sheet .sub{color:var(--mut);font-size:13px;margin-bottom:10px}
+.big{display:flex;align-items:baseline;gap:10px;margin:4px 0 10px;flex-wrap:wrap}
+.big b{font-size:28px;color:var(--ok)}
+.big span{color:var(--mut)}
+.row{display:flex;gap:10px}
+.btn{flex:1;padding:13px;border-radius:14px;background:var(--card2);font-weight:600;text-align:center}
+.btn.go{background:var(--acc);color:#002533}
+.btn.stop{background:var(--red);color:#fff}
+#rAlerts{margin:0 0 10px;max-height:28vh;overflow-y:auto}
+.ra{display:flex;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #ffffff10;width:100%;text-align:left}
+.ra img{width:28px;height:28px;flex:none}
+.ra div{flex:1;min-width:0}
+.ra small{display:block;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ra span{color:var(--mut);font-size:13px;flex:none}
+.okmsg{color:var(--ok);font-size:14px;margin:0 0 10px}
+#banner{position:fixed;left:10px;right:10px;top:calc(10px + var(--st));z-index:7;background:#1b8f4c;border-radius:18px;box-shadow:0 6px 20px #0009;display:flex;align-items:center;gap:12px;padding:12px 14px}
+#bArrow{font-size:38px;line-height:1;width:44px;text-align:center;font-weight:700}
+#bDist{font-size:24px;font-weight:700}
+#bText{font-size:15px;opacity:.95}
+#bThen{position:fixed;left:22px;top:calc(92px + var(--st));z-index:6;background:#14703b;border-radius:0 0 12px 12px;padding:8px 12px 5px;font-size:13px}
+#warn{position:fixed;left:10px;right:10px;top:calc(130px + var(--st));z-index:7;background:#2a1a12;border:2px solid #ff9800;border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px #0009}
+#warn img{width:36px;height:36px}
+#warn b{display:block}
+#warn small{color:#ffcc99}
+#navbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-radius:20px 20px 0 0;padding:12px 16px calc(12px + var(--sb));display:flex;align-items:center;gap:12px;box-shadow:0 -8px 30px #000a}
+#navbar .eta{flex:1}
+#navbar .eta b{font-size:22px;color:var(--ok)}
+#navbar .eta div{color:var(--mut);font-size:13px}
+#navbar .fab{width:46px;height:46px;background:var(--card2);box-shadow:none}
+#recenter{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + var(--sb));z-index:6;background:var(--card);border-radius:22px;padding:10px 18px;box-shadow:0 4px 14px #0009;font-weight:600;color:var(--acc)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(200px + var(--sb));z-index:9;background:#000d;color:#fff;padding:9px 14px;border-radius:12px;font-size:14px;max-width:86%;text-align:center}
+.maplibregl-popup-content{background:var(--card);color:var(--txt);border-radius:14px;padding:12px 14px 10px;box-shadow:0 6px 24px #000b;max-width:300px}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:var(--card)}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip{border-bottom-color:var(--card)}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--card)}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--card)}
+.maplibregl-popup-close-button{color:var(--mut);font-size:20px;right:4px;top:2px}
+.pp h4{margin:0 22px 4px 0;font-size:15px;display:flex;gap:8px;align-items:center}
+.pp h4 img{width:26px;height:26px}
+.pp .road{font-weight:600;font-size:13px}
+.pp .meta{color:var(--mut);font-size:12px;margin:4px 0}
+.pp .tag{display:inline-block;background:#ffffff14;border-radius:8px;padding:2px 7px;font-size:12px;margin:2px 4px 2px 0}
+.pp .tag.red{background:#ff4d4f33;color:#ffb3b3}
+.pp p{margin:6px 0;font-size:13px;max-height:120px;overflow-y:auto;white-space:pre-line}
+.pp a{color:var(--acc);font-size:13px}
+.pp .act{display:block;width:100%;margin-top:8px;padding:9px;border-radius:10px;background:var(--acc);color:#002533;font-weight:600}
+.maplibregl-ctrl-attrib{background:#0f1720aa!important;color:#8fa3b5}
+.maplibregl-ctrl-attrib a{color:#8fa3b5!important}
+#me{width:30px;height:30px;pointer-events:none}
+#me .dot{position:absolute;inset:6px;border-radius:50%;background:var(--acc);border:3px solid #fff;box-shadow:0 0 0 6px #33ccff33}
+#me .arr{position:absolute;left:-9px;top:-9px;width:48px;height:48px;display:none;filter:drop-shadow(0 2px 3px #000c)}
+#me.nav .dot{display:none}
+#me.nav .arr{display:block}
+#layersPanel .lr{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #ffffff10;cursor:pointer}
+#layersPanel .lr img{width:28px;height:28px}
+#layersPanel .lr div{flex:1}
+#layersPanel .lr small{display:block;color:var(--mut)}
+.sw{width:46px;height:28px;border-radius:14px;background:#33414f;position:relative;flex:none}
+.sw::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#cfd8e0;transition:.15s}
+.sw.on{background:var(--acc2)}
+.sw.on::after{left:21px;background:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0 4px;font-size:12px;color:var(--mut)}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend img{width:20px;height:20px}
+.fine{font-size:11px;color:var(--mut);margin-top:8px}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="top">
+  <div id="sbox">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <input id="q" type="search" placeholder="Where to?" autocomplete="off" enterkeyhint="search">
+    <button id="qx" class="hide" aria-label="Clear">&times;</button>
+  </div>
+  <div id="res" class="hide"></div>
+  <div id="chips"></div>
+</div>
+<div id="fabs">
+  <button class="fab" id="bLayers" aria-label="Layers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
+  <button class="fab" id="bLocate" aria-label="My location"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
+</div>
+<div id="status">Loading road alerts...</div>
+<div id="routeSheet" class="sheet hide">
+  <h3 id="rName">Destination</h3>
+  <div class="sub" id="rAddr"></div>
+  <div class="big"><b id="rTime">--</b><span id="rDist"></span><span id="rArr"></span></div>
+  <div id="rAlerts"></div>
+  <div class="row"><button class="btn" id="rCancel">Close</button><button class="btn go" id="rGo">Start driving</button></div>
+</div>
+<div id="layersPanel" class="sheet hide">
+  <h3>What to show</h3>
+  <div class="sub">Live data from Transport Victoria and VicEmergency</div>
+  <div id="lrList"></div>
+  <div class="row" style="margin-top:10px"><button class="btn" id="lpVoice">Voice: on</button><button class="btn go" id="lpClose">Done</button></div>
+  <div class="fine">Alerts refresh every 3 minutes, roadworks every 6 hours. Roadie has no live traffic speeds, so routes do not avoid traffic jams. Always follow road signs and police directions.</div>
+</div>
+<div id="banner" class="hide"><div id="bArrow">&uarr;</div><div><div id="bDist">--</div><div id="bText"></div></div></div>
+<div id="bThen" class="hide"></div>
+<div id="warn" class="hide"><img alt=""><div><b></b><small></small></div></div>
+<div id="navbar" class="hide">
+  <button class="fab" id="nMute" aria-label="Voice"></button>
+  <div class="eta"><b id="nEta">--</b><div id="nRem"></div></div>
+  <button class="btn stop" id="nStop" style="flex:none;padding:12px 18px">Stop</button>
+</div>
+<button id="recenter" class="hide">Re-centre</button>
+<div id="toast" class="hide"></div>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+'use strict';
+/* ===================== settings ===================== */
+const VIC_KEY='66921d94-bf4f-4221-b99b-406617a6215e';   /* Transport Victoria open data key */
+const URL_UNPLANNED='https://api.opendata.transport.vic.gov.au/api/opendata/roads/disruptions/unplanned/v3';
+const URL_PLANNED='https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/planned/v1/?format=GeoJson';
+const URL_VICEM='https://emergency.vic.gov.au/public/events-geojson.json';
+const MAP_STYLE='https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+const OSRM='https://router.project-osrm.org/route/v1/driving/';
+const PHOTON='https://photon.komoot.io/api/';
+const MELB=[144.9631,-37.8136];
+const LIVE_EVERY=3*60*1000, WORKS_EVERY=6*60*60*1000, WORKS_MAX_PAGES=20;
+
+/* ===================== kinds and icons ===================== */
+const KINDS={
+  crash:   {label:'Crash',             col:'#e53935', g:'crash'},
+  closed:  {label:'Road closed',       col:'#b71c1c', g:'closed'},
+  hazard:  {label:'Hazard',            col:'#fb8c00', g:'warn'},
+  vehicle: {label:'Stopped vehicle',   col:'#f9a825', g:'car'},
+  flood:   {label:'Flooded road',      col:'#1e88e5', g:'wave'},
+  works:   {label:'Roadworks',         col:'#ffb300', g:'cone'},
+  event:   {label:'Special event',     col:'#8e24aa', g:'star'},
+  fire:    {label:'Fire',              col:'#ff5722', g:'fire'},
+  burn:    {label:'Planned burn',      col:'#8d6e63', g:'fire'},
+  rescue:  {label:'Rescue',            col:'#d81b60', g:'plus'},
+  hazmat:  {label:'Hazardous material',col:'#7cb342', g:'warn'},
+  weather: {label:'Weather warning',   col:'#00897b', g:'wind'},
+  emerg:   {label:'Emergency',         col:'#5e35b1', g:'warn'}
+};
+const GROUPS={
+  hazards:{label:'Crashes and hazards', short:'Crashes', sub:'Crashes, closures, road damage, stopped cars', icon:'crash', on:true},
+  floods: {label:'Flooded roads',       short:'Floods',  sub:'Water over the road',                          icon:'flood', on:true},
+  works:  {label:'Roadworks',           short:'Works',sub:'Planned works and events (bigger download)',  icon:'works', on:true},
+  emerg:  {label:'Fires and emergencies',short:'Fires',  sub:'VicEmergency incidents and warnings',          icon:'fire',  on:true}
+};
+function drawGlyph(c,g,s){
+  c.save();c.translate(s/2,s/2);const u=s/64;c.scale(u,u);
+  c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';
+  const P=(pts,fill)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();fill?c.fill():c.stroke()};
+  switch(g){
+    case 'crash': P([[0,-17],[5,-6],[17,-9],[9,1],[16,12],[3,8],[-2,18],[-5,7],[-17,10],[-9,0],[-16,-11],[-4,-6]],1);break;
+    case 'closed': c.fillRect(-14,-4,28,8);break;
+    case 'warn': P([[0,-16],[16,13],[-16,13]],1);c.fillStyle='#000a';c.fillRect(-2,-6,4,11);c.fillRect(-2,8,4,3);break;
+    case 'car': c.fillRect(-15,-4,30,12);P([[-10,-4],[-6,-12],[6,-12],[10,-4]],1);
+      c.fillStyle='#0008';c.beginPath();c.arc(-8,9,4,0,7);c.arc(8,9,4,0,7);c.fill();break;
+    case 'wave': for(const y of [-8,2,12]){c.beginPath();c.moveTo(-16,y);c.bezierCurveTo(-10,y-7,-6,y-7,0,y);c.bezierCurveTo(6,y+7,10,y+7,16,y);c.stroke()}break;
+    case 'cone': P([[-4,-17],[4,-17],[13,12],[-13,12]],1);c.fillRect(-17,12,34,5);c.fillStyle='#0007';c.fillRect(-8,-4,16,5);break;
+    case 'star': {const pts=[];for(let i=0;i<10;i++){const r=i%2?7:17,a=-Math.PI/2+i*Math.PI/5;pts.push([r*Math.cos(a),r*Math.sin(a)])}P(pts,1);break}
+    case 'fire': c.beginPath();c.moveTo(0,-18);c.bezierCurveTo(10,-6,15,0,13,8);c.bezierCurveTo(11,16,4,18,0,18);c.bezierCurveTo(-4,18,-11,16,-13,8);
+      c.bezierCurveTo(-14,1,-8,-3,-6,-10);c.bezierCurveTo(-3,-4,-2,-2,0,-1);c.bezierCurveTo(2,-7,1,-12,0,-18);c.fill();break;
+    case 'plus': c.fillRect(-4,-14,8,28);c.fillRect(-14,-4,28,8);break;
+    case 'wind': c.beginPath();c.moveTo(-16,-6);c.lineTo(8,-6);c.arc(8,-11,5,Math.PI/2,-Math.PI/2,true);c.moveTo(-16,3);c.lineTo(12,3);c.moveTo(-16,11);c.lineTo(4,11);c.stroke();break;
+  }
+  c.restore();
+}
+function makeIcon(kind,size){
+  const k=KINDS[kind],cv=document.createElement('canvas');cv.width=cv.height=size;const c=cv.getContext('2d');
+  c.beginPath();c.arc(size/2,size/2,size/2-size*.07,0,7);c.fillStyle=k.col;c.fill();
+  c.lineWidth=size*.07;c.strokeStyle='#fff';c.stroke();
+  drawGlyph(c,k.g,size*.9);return cv;
+}
+const ICON_URL={};
+for(const k in KINDS){try{ICON_URL[k]=makeIcon(k,64).toDataURL()}catch(e){ICON_URL[k]=''}}
+
+/* ===================== small helpers ===================== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const tc=s=>String(s||'').trim().toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
+function fmtDist(m){if(m<950){const r=m<100?10:50;return Math.max(r,Math.round(m/r)*r)+' m'}return (m<9500?(m/1000).toFixed(1):Math.round(m/1000))+' km'}
+function sayDist(m){if(m<950){const r=m<100?10:50;return Math.max(r,Math.round(m/r)*r)+' metres'}const k=m<9500?(Math.round(m/100)/10):Math.round(m/1000);return k+(k===1?' kilometre':' kilometres')}
+function fmtDur(s){const m=Math.max(1,Math.round(s/60));if(m<60)return m+' min';const h=Math.floor(m/60);return h+' h '+(m%60)+' min'}
+function clock(d){return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}
+function melOffset(t){/* Melbourne is UTC+11 from the first Sunday in October to the first Sunday in April, else UTC+10 */
+  const y=new Date(t).getUTCFullYear();const fs=m=>{const x=new Date(Date.UTC(y,m,1));return 1+((7-x.getUTCDay())%7)};
+  const start=Date.UTC(y,9,fs(9),2)-10*3600000,end=Date.UTC(y,3,fs(3),3)-11*3600000;return (t>=start||t<end)?11:10}
+function vicTime(iso){/* Transport Victoria times have no zone; they are Melbourne local time */
+  if(!iso)return NaN;if(/[zZ]$|[+-]\d\d:?\d\d$/.test(iso))return Date.parse(iso);
+  const t=Date.parse(iso+'Z');if(isNaN(t))return NaN;return t-melOffset(t)*3600000}
+function ago(ms){if(!ms||isNaN(ms))return '';const m=Math.round((Date.now()-ms)/60000);if(m<1)return 'just now';if(m<60)return m+' min ago';
+  const h=Math.round(m/60);if(h<48)return h+' h ago';const d=Math.round(h/24);return d<60?d+' days ago':'on '+new Date(ms).toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})}
+function toast(msg,ms){const t=$('toast');t.textContent=msg;t.classList.remove('hide');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.add('hide'),ms||3500)}
+const store={get(k,d){try{const v=localStorage.getItem('roadie.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('roadie.'+k,JSON.stringify(v))}catch(e){}}};
+const RAD=Math.PI/180;
+function proj(lat0){const kx=111320*Math.cos(lat0*RAD),ky=110540;return p=>[p[0]*kx,p[1]*ky]}
+function haversine(a,b){const dLat=(b[1]-a[1])*RAD,dLon=(b[0]-a[0])*RAD,la=a[1]*RAD,lb=b[1]*RAD;
+  const h=Math.sin(dLat/2)**2+Math.cos(la)*Math.cos(lb)*Math.sin(dLon/2)**2;return 12742000*Math.asin(Math.sqrt(h))}
+function bearing(a,b){const la=a[1]*RAD,lb=b[1]*RAD,dl=(b[0]-a[0])*RAD;
+  return (Math.atan2(Math.sin(dl)*Math.cos(lb),Math.cos(la)*Math.sin(lb)-Math.sin(la)*Math.cos(lb)*Math.cos(dl))/RAD+360)%360}
+function flat(g,out){out=out||{pts:[],lines:[],polys:[]};if(!g)return out;
+  switch(g.type){case 'Point':out.pts.push(g.coordinates);break;case 'MultiPoint':out.pts.push(...g.coordinates);break;
+    case 'LineString':out.lines.push(g.coordinates);break;case 'MultiLineString':out.lines.push(...g.coordinates);break;
+    case 'Polygon':out.polys.push(g.coordinates);break;case 'MultiPolygon':out.polys.push(...g.coordinates);break;
+    case 'GeometryCollection':(g.geometries||[]).forEach(x=>flat(x,out));break}
+  return out}
+const okPt=p=>Array.isArray(p)&&isFinite(p[0])&&isFinite(p[1])&&Math.abs(p[1])<=90&&!(p[0]===0&&p[1]===0);
+function linePoint(lines){let best=null;for(const l of lines)if(l&&l.length&&(!best||l.length>best.length))best=l;if(!best)return null;
+  if(best.length===2)return [(best[0][0]+best[1][0])/2,(best[0][1]+best[1][1])/2];return best[Math.floor(best.length/2)]}
+function thin(line,max){const r=a=>[Math.round(a[0]*1e5)/1e5,Math.round(a[1]*1e5)/1e5];if(line.length<=max)return line.map(r);
+  const out=[],step=(line.length-1)/(max-1);for(let i=0;i<max;i++)out.push(r(line[Math.round(i*step)]));return out}
+
+/* ===================== data ===================== */
+let items={live:[],works:[],emerg:[]};
+const feedState={live:{},works:{},emerg:{}};
+const enabled=Object.assign(Object.fromEntries(Object.entries(GROUPS).map(([k,v])=>[k,v.on])),store.get('layers',{}));
+const uid=()=>Math.random().toString(36).slice(2);
+function unplannedKind(p){const t=(p.eventType||'').toLowerCase(),s=(p.eventSubType||p.eventSubtype||'').toLowerCase(),imp=((p.impact||{}).impactType||'').toLowerCase();
+  if(t.includes('crash')||s.includes('collision'))return 'crash';
+  if(t.includes('flood')||s.includes('flood'))return 'flood';
+  if(s.includes('stationary')||s.includes('breakdown'))return 'vehicle';
+  if(t.includes('roadwork'))return 'works';
+  if(imp.includes('road closed'))return 'closed';
+  return 'hazard'}
+function parseUnplanned(j){const fs=((j&&j.data)||j||{}).features||[];const out=[];
+  for(const f of fs){const p=f.properties||{};if(p.status&&!/active|pending/i.test(p.status))continue;
+    const g=flat(f.geometry);const pt=linePoint(g.lines)||g.pts[0];if(!okPt(pt))continue;
+    const kind=unplannedKind(p),imp=p.impact||{},ref=p.reference||{};
+    out.push({id:p.id||p.impactId||uid(),src:'live',grp:kind==='flood'?'floods':(kind==='works'?'works':'hazards'),kind,
+      title:[p.eventType,p.eventSubType].filter((x,i,a)=>x&&a.indexOf(x)===i).join(': ')||KINDS[kind].label,
+      road:tc(p.closedRoadName||ref.localRoadName),place:tc(ref.startIntersectionLocality),
+      tags:[imp.impactType,imp.direction].filter(Boolean),closed:/road closed/i.test(imp.impactType||''),
+      desc:(p.description||'').trim(),updatedMs:vicTime(p.lastUpdated||p.created),
+      url:p.weblinkURL||'',status:p.status||'',active:true,pt,lines:g.lines.map(l=>thin(l,80)),polys:[]})}
+  return out}
+function parsePlanned(j,now){const fs=(j&&j.features)||[];const out=[];const soon=now+24*3600000;
+  for(const f of fs){const p=f.properties||{},d=p.duration||{};const st=vicTime(d.start),en=vicTime(d.end);
+    if(!isNaN(en)&&en<now)continue;if(!isNaN(st)&&st>soon)continue;
+    const g=flat(f.geometry);const pt=linePoint(g.lines)||g.pts[0];if(!okPt(pt))continue;
+    const kind=/event/i.test(p.eventType||'')?'event':'works',imp=p.impact||{};
+    const tags=[imp.impactType,imp.direction,imp.speedLimitOnSite?('Speed limit '+imp.speedLimitOnSite):'',imp.delay?('Delay '+imp.delay):''].filter(Boolean);
+    out.push({id:p.id||uid(),src:'works',grp:'works',kind,
+      title:p.eventDueTo||p.eventSubtype||KINDS[kind].label,road:tc(p.closedRoadName),place:tc(p.startIntersectionLocality),
+      tags,closed:/road closed/i.test(imp.impactType||''),desc:(p.description||'').trim(),
+      updatedMs:vicTime(p.lastUpdated),endMs:en,url:'',status:p.status||'',
+      active:/active/i.test(p.status||''),pt,lines:g.lines.map(l=>thin(l,40)),polys:[]})}
+  return out}
+function emergKind(p){const a=((p.category1||'')+' '+(p.category2||'')).toLowerCase();
+  if(a.includes('planned burn'))return 'burn';if(a.includes('fire'))return 'fire';if(a.includes('flood'))return 'flood';
+  if(a.includes('rescue')||a.includes('medical'))return 'rescue';if(a.includes('hazard')||a.includes('hazmat'))return 'hazmat';
+  if(/\bmet\b|wind|storm|weather/.test(a))return 'weather';return 'emerg'}
+function parseVicEm(j){const fs=(j&&j.features)||[];const out=[];
+  for(const f of fs){const p=f.properties||{};const g=flat(f.geometry);let pt=g.pts[0];
+    if(!okPt(pt)&&g.polys.length){const r=g.polys[0][0]||[];let x=0,y=0;r.forEach(c=>{x+=c[0];y+=c[1]});pt=r.length?[x/r.length,y/r.length]:null}
+    if(!okPt(pt))continue;const kind=emergKind(p);
+    out.push({id:'vic'+(p.id||p.sourceId||uid()),src:'emerg',grp:'emerg',kind,
+      title:p.sourceTitle||p.category2||p.category1||KINDS[kind].label,road:tc(p.location||''),place:'',
+      tags:[p.category2&&p.category2!==p.category1?p.category1+': '+p.category2:p.category1,p.status,p.sizeFmt].filter(Boolean),
+      desc:p.text||p.description||'',updatedMs:Date.parse(p.updated||p.created),url:p.url||'',
+      status:p.status||'',active:true,pt,lines:[],polys:g.polys})}
+  return out}
+async function getJSON(url,headers,ms){const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),ms||25000);
+  try{const r=await fetch(url,{headers:headers||{},signal:ctl.signal,cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);
+    return {json:await r.json(),headers:r.headers}}finally{clearTimeout(t)}}
+function friendlyErr(e){const m=String(e&&e.message||e);if(/401|403/.test(m))return 'key not accepted';if(/abort/i.test(m))return 'timed out';
+  if(/fetch|NetworkError|Load failed/i.test(m))return navigator.onLine===false?'offline':'blocked or offline';return m}
+async function loadLive(){
+  const p1=getJSON(URL_UNPLANNED,{KeyId:VIC_KEY}).then(r=>{items.live=parseUnplanned(r.json);feedState.live={ok:true,at:Date.now()}})
+    .catch(e=>{feedState.live={ok:false,err:friendlyErr(e),at:Date.now()}});
+  const p2=getJSON(URL_VICEM).then(r=>{items.emerg=parseVicEm(r.json);feedState.emerg={ok:true,at:Date.now()}})
+    .catch(e=>{feedState.emerg={ok:false,err:friendlyErr(e),at:Date.now()}});
+  await Promise.all([p1,p2]);refreshMap();
+}
+const idb={db:null,open(){return this.db||(this.db=new Promise((res,rej)=>{const r=indexedDB.open('roadie',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async get(k){try{const db=await this.open();return await new Promise(res=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}},
+  async set(k,v){try{const db=await this.open();db.transaction('kv','readwrite').objectStore('kv').put(v,k)}catch(e){}}};
+let worksLoading=false;
+async function loadWorks(force){/* roadworks come in pages of 500; the trimmed result is kept on the phone for 6 hours */
+  if(worksLoading)return;worksLoading=true;
+  try{
+    if(!force){const c=await idb.get('works');if(c&&c.at&&Date.now()-c.at<WORKS_EVERY&&Array.isArray(c.items)){
+      const now=Date.now();items.works=c.items.filter(i=>!(i.endMs<now));feedState.works={ok:true,at:c.at,cached:true};return}}
+    let token=null,page=0,all=[];const now=Date.now();
+    do{feedState.works={loading:page+1};updateStatus();
+      const h={KeyId:VIC_KEY};if(token)h.NextPageToken=token;
+      const r=await getJSON(URL_PLANNED,h,45000);all=all.concat(parsePlanned(r.json,now));
+      token=((r.json||{}).nextPageDetails||{}).nextPageToken||null;page++;
+      items.works=all;if(page===1||page%3===0)refreshMap();
+    }while(token&&page<WORKS_MAX_PAGES);
+    feedState.works={ok:true,at:Date.now(),pages:page};idb.set('works',{at:Date.now(),items:all});
+  }catch(e){feedState.works={ok:false,err:friendlyErr(e),at:Date.now()}}
+  finally{worksLoading=false;refreshMap()}
+}
+
+/* ===================== map ===================== */
+const map=new maplibregl.Map({container:'map',style:MAP_STYLE,center:store.get('center',MELB),zoom:store.get('zoom',11.5),
+  attributionControl:{compact:true},maxPitch:65});
+let mapReady=false;
+const fc=f=>({type:'FeatureCollection',features:f});
+map.on('load',()=>{
+  for(const k in KINDS){map.addImage('k-'+k,makeIcon(k,72).getContext('2d').getImageData(0,0,72,72),{pixelRatio:2})}
+  for(const s of ['polys','lines','pts','route'])map.addSource(s,{type:'geojson',data:fc([])});
+  map.addLayer({id:'polys-fill',type:'fill',source:'polys',paint:{'fill-color':['get','col'],'fill-opacity':.18}});
+  map.addLayer({id:'polys-line',type:'line',source:'polys',paint:{'line-color':['get','col'],'line-width':1.5,'line-opacity':.8}});
+  map.addLayer({id:'route-case',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#063a52','line-width':['interpolate',['linear'],['zoom'],10,7,16,16]}});
+  map.addLayer({id:'route-line',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#33ccff','line-width':['interpolate',['linear'],['zoom'],10,4,16,10]}});
+  map.addLayer({id:'lines',type:'line',source:'lines',minzoom:9,layout:{'line-join':'round','line-cap':'round'},
+    paint:{'line-color':['get','col'],'line-width':['interpolate',['linear'],['zoom'],9,2,16,7],'line-opacity':.85}});
+  const symLayout=size=>({'icon-image':['concat','k-',['get','kind']],'icon-size':['interpolate',['linear'],['zoom'],8,size*.55,14,size],
+    'icon-allow-overlap':['step',['zoom'],false,14,true],'symbol-sort-key':['get','prio'],'icon-padding':1});
+  map.addLayer({id:'pts-works',type:'symbol',source:'pts',minzoom:11.5,filter:['==',['get','grp'],'works'],layout:symLayout(.85)});
+  map.addLayer({id:'pts-main',type:'symbol',source:'pts',filter:['!=',['get','grp'],'works'],layout:symLayout(1)});
+  for(const id of ['pts-main','pts-works','lines','polys-fill']){
+    map.on('click',id,e=>{if(nav.on||e._done)return;const f=e.features&&e.features[0];if(!f)return;const it=byId.get(f.properties.id);
+      if(it){e._done=true;showPopup(it,/^pts/.test(id)?it.pt:e.lngLat.toArray())}});
+    map.on('mouseenter',id,()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave',id,()=>map.getCanvas().style.cursor='');
+  }
+  mapReady=true;refreshMap();if(route.data)drawRoute();
+});
+map.on('moveend',()=>{if(!nav.on){const c=map.getCenter();store.set('center',[+c.lng.toFixed(5),+c.lat.toFixed(5)]);store.set('zoom',+map.getZoom().toFixed(2))}});
+map.on('contextmenu',e=>{if(nav.on)return;const ll=e.lngLat.toArray();const lab=ll[1].toFixed(5)+', '+ll[0].toFixed(5);
+  const pop=new maplibregl.Popup({maxWidth:'260px'}).setLngLat(ll)
+    .setHTML('<div class="pp"><div class="road">Dropped pin</div><div class="meta">'+lab+'</div><button class="act">Directions to here</button></div>').addTo(map);
+  pop.getElement().querySelector('.act').onclick=()=>{pop.remove();planTo({name:'Dropped pin',addr:lab,ll})}});
+const PRIO={crash:1,closed:2,fire:3,flood:4,rescue:5,vehicle:6,hazard:7,hazmat:8,weather:9,emerg:10,works:20,event:21,burn:30};
+let byId=new Map();
+const allItems=()=>[...items.live,...items.emerg,...items.works];
+const visibleItems=()=>allItems().filter(i=>enabled[i.grp]);
+function refreshMap(){
+  const vis=visibleItems();byId=new Map(vis.map(i=>[i.id,i]));
+  if(mapReady){const pts=[],lines=[],polys=[];
+    for(const i of vis){const col=i.closed?KINDS.closed.col:KINDS[i.kind].col;
+      pts.push({type:'Feature',geometry:{type:'Point',coordinates:i.pt},properties:{id:i.id,kind:i.closed&&i.kind!=='crash'?'closed':i.kind,grp:i.grp,prio:PRIO[i.closed?'closed':i.kind]||50}});
+      for(const l of i.lines)if(l.length>1)lines.push({type:'Feature',geometry:{type:'LineString',coordinates:l},properties:{id:i.id,col}});
+      for(const p of i.polys)polys.push({type:'Feature',geometry:{type:'Polygon',coordinates:p},properties:{id:i.id,col:KINDS[i.kind].col}})}
+    map.getSource('pts').setData(fc(pts));map.getSource('lines').setData(fc(lines));map.getSource('polys').setData(fc(polys))}
+  renderChips();updateStatus();if(route.data){findRouteAlerts();if(!nav.on)renderRouteSheet()}
+}
+function updateStatus(){const parts=[],L=feedState.live,W=feedState.works,E=feedState.emerg;
+  if(L.ok===false)parts.push('<span class="err">Traffic alerts: '+esc(L.err)+'</span>');
+  if(E.ok===false)parts.push('<span class="err">VicEmergency: '+esc(E.err)+'</span>');
+  if(enabled.works){if(W.loading)parts.push('Loading roadworks, part '+W.loading+'...');else if(W.ok===false)parts.push('<span class="err">Roadworks: '+esc(W.err)+'</span>')}
+  const t=Math.max(L.ok?L.at:0,E.ok?E.at:0);
+  if(t)parts.unshift('<b>'+visibleItems().length+'</b> alerts on the map &middot; updated '+clock(new Date(t)));
+  $('status').innerHTML=parts.join('<br>')||'Loading road alerts...'}
+function renderChips(){const all=allItems();
+  $('chips').innerHTML=Object.entries(GROUPS).map(([g,v])=>{const n=all.filter(i=>i.grp===g).length;
+    return '<button class="chip'+(enabled[g]?' on':'')+'" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" width="17" height="17" alt="">'+esc(v.short)+' <em>'+n+'</em></button>'}).join('');
+  $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>toggleGroup(b.dataset.g))}
+function toggleGroup(g){enabled[g]=!enabled[g];store.set('layers',enabled);
+  if(g==='works'&&enabled.works&&!items.works.length)loadWorks();refreshMap();renderLayers()}
+function renderLayers(){
+  $('lrList').innerHTML=Object.entries(GROUPS).map(([g,v])=>'<div class="lr" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" alt=""><div>'+esc(v.label)+'<small>'+esc(v.sub)+'</small></div><span class="sw'+(enabled[g]?' on':'')+'"></span></div>').join('')
+   +'<div class="legend">'+['crash','closed','hazard','vehicle','flood','works','event','fire','burn','rescue','weather'].map(k=>'<span><img src="'+ICON_URL[k]+'" alt="">'+KINDS[k].label+'</span>').join('')+'</div>';
+  $('lrList').querySelectorAll('.lr').forEach(r=>r.onclick=()=>toggleGroup(r.dataset.g));
+  $('lpVoice').textContent='Voice: '+(voiceOn?'on':'off')}
+function popupHTML(i,withDir){const k=KINDS[i.kind];let d=i.desc||'';if(d.length>700)d=d.slice(0,700)+'...';
+  const tags=(i.closed?['<span class="tag red">Road closed</span>']:[]).concat(i.tags.filter(t=>!(i.closed&&/road closed/i.test(t))).map(t=>'<span class="tag">'+esc(t)+'</span>')).join('');
+  const st=i.src==='works'?(i.active?'Active now':'Scheduled, check the times'):'';
+  return '<div class="pp"><h4><img src="'+ICON_URL[i.closed&&i.kind!=='crash'?'closed':i.kind]+'" alt="">'+esc(i.title||k.label)+'</h4>'
+    +(i.road?'<div class="road">'+esc(i.road)+(i.place?', '+esc(i.place):'')+'</div>':'')
+    +'<div>'+tags+'</div>'+(d?'<p>'+esc(d)+'</p>':'')
+    +'<div class="meta">'+[st,i.updatedMs?('Updated '+ago(i.updatedMs)):'',i.src==='emerg'?'VicEmergency':'Transport Victoria'].filter(Boolean).join(' &middot; ')+'</div>'
+    +(/^https?:/.test(i.url)?'<a href="'+esc(i.url)+'" target="_blank" rel="noopener">More info</a>':'')
+    +(withDir?'<button class="act">Directions to here</button>':'')+'</div>'}
+let curPopup=null;
+function showPopup(i,ll){if(curPopup)curPopup.remove();
+  curPopup=new maplibregl.Popup({maxWidth:'300px',offset:14}).setLngLat(ll).setHTML(popupHTML(i,!route.data)).addTo(map);
+  const b=curPopup.getElement().querySelector('.act');if(b)b.onclick=()=>{curPopup.remove();planTo({name:i.road||KINDS[i.kind].label,addr:i.place||'',ll:i.pt})}}
+
+/* ===================== my location ===================== */
+let me=null;
+const meEl=document.createElement('div');meEl.id='me';
+meEl.innerHTML='<div class="dot"></div><svg class="arr" viewBox="0 0 30 30"><path d="M15 2 L26 27 L15 21 L4 27 Z" fill="#ffffff" stroke="#0a6d92" stroke-width="2.6" stroke-linejoin="round"/></svg>';
+const meMarker=new maplibregl.Marker({element:meEl,rotationAlignment:'map',pitchAlignment:'viewport'});
+let meShown=false;
+function setMe(pos){const c=pos.coords;const ll=[c.longitude,c.latitude];
+  let hd=(c.heading!=null&&!isNaN(c.heading)&&c.speed>1.5)?c.heading:null;
+  if(hd==null&&me&&haversine(me.ll,ll)>8)hd=bearing(me.ll,ll);
+  me={ll,acc:c.accuracy||50,heading:hd!=null?hd:(me?me.heading:0),speed:c.speed,t:pos.timestamp||Date.now()};
+  meMarker.setLngLat(ll);if(!meShown){meMarker.addTo(map);meShown=true}}
+function locateOnce(fly){return new Promise(res=>{
+  if(!navigator.geolocation){toast('This phone cannot share location');return res(null)}
+  navigator.geolocation.getCurrentPosition(p=>{setMe(p);if(fly)map.flyTo({center:me.ll,zoom:Math.max(map.getZoom(),14.5)});startBgWatch();res(me)},
+    e=>{if(fly)toast(e.code===1?'Location is blocked. Allow it in your browser settings.':'Could not find your location');res(null)},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:15000})})}
+$('bLocate').onclick=()=>locateOnce(true);
+let bgWatch=null;
+function startBgWatch(){if(bgWatch!=null||nav.on||!navigator.geolocation)return;bgWatch=navigator.geolocation.watchPosition(p=>{if(!nav.on)setMe(p)},()=>{},{enableHighAccuracy:false,maximumAge:30000})}
+
+/* ===================== search ===================== */
+let qTimer=null,qSeq=0;
+$('q').addEventListener('input',()=>{const v=$('q').value.trim();$('qx').classList.toggle('hide',!v);clearTimeout(qTimer);
+  if(v.length<3){$('res').classList.add('hide');return}qTimer=setTimeout(()=>search(v),350)});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(qTimer);search($('q').value.trim())}});
+$('q').addEventListener('focus',()=>{if($('res').innerHTML&&$('q').value.trim().length>2)$('res').classList.remove('hide')});
+$('qx').onclick=()=>{$('q').value='';$('qx').classList.add('hide');$('res').classList.add('hide');if(route.data&&!nav.on){clearRoute();hideSheets()}};
+function placeLabel(p){const street=[p.housenumber,p.street].filter(Boolean).join(' ');const n=p.name||street||p.city||'Place';
+  const parts=[];if(p.name&&street)parts.push(street);
+  for(const x of [p.district||p.locality,p.city,p.state])if(x&&!parts.includes(x)&&x!==n)parts.push(x);
+  return {name:n,addr:parts.join(', ')}}
+async function search(v){if(!v)return;const my=++qSeq;const c=me?me.ll:map.getCenter().toArray();
+  const u=PHOTON+'?q='+encodeURIComponent(v)+'&limit=8&lang=en&lat='+c[1].toFixed(4)+'&lon='+c[0].toFixed(4)+'&bbox=112,-44.5,154.5,-9';
+  try{const r=await getJSON(u,null,12000);if(my!==qSeq)return;
+    const fs=(r.json.features||[]).filter(f=>!f.properties.countrycode||f.properties.countrycode==='AU');
+    $('res').innerHTML=fs.length?fs.map((f,i)=>{const L=placeLabel(f.properties);const d=me?' &middot; '+fmtDist(haversine(me.ll,f.geometry.coordinates)):'';
+      return '<button data-i="'+i+'"><b>'+esc(L.name)+'</b><small>'+esc(L.addr)+d+'</small></button>'}).join(''):'<button disabled><small>No places found</small></button>';
+    $('res').classList.remove('hide');
+    $('res').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const f=fs[+b.dataset.i];const L=placeLabel(f.properties);
+      $('res').classList.add('hide');$('q').blur();planTo({name:L.name,addr:L.addr,ll:f.geometry.coordinates})});
+  }catch(e){if(my===qSeq){$('res').innerHTML='<button disabled><small>Search is not working right now ('+esc(friendlyErr(e))+')</small></button>';$('res').classList.remove('hide')}}}
+
+/* ===================== routing ===================== */
+const route={dest:null,data:null,from:null,alerts:[],geo:null};
+async function planTo(dest){
+  if(curPopup)curPopup.remove();route.dest=dest;$('q').value=dest.name;$('qx').classList.remove('hide');
+  showSheet('routeSheet');$('rName').textContent=dest.name;$('rAddr').textContent=dest.addr||'';$('rTime').textContent='...';$('rDist').textContent='';$('rArr').textContent='';
+  $('rAlerts').innerHTML='<div class="sub">Finding the best way...</div>';$('rGo').disabled=true;
+  let from=me&&Date.now()-me.t<120000?me.ll:null;
+  if(!from){const m=await locateOnce(false);from=m?m.ll:null}
+  if(!from){from=map.getCenter().toArray();toast('Starting from the map centre because location is off',4500)}
+  try{await fetchRoute(from,dest.ll);drawRoute();fitRoute();renderRouteSheet();$('rGo').disabled=false}
+  catch(e){$('rTime').textContent='No route';$('rAlerts').innerHTML='<div class="sub">Could not get directions ('+esc(friendlyErr(e))+'). Try again in a moment.</div>'}}
+async function fetchRoute(from,to,hdg){
+  let u=OSRM+from[0].toFixed(6)+','+from[1].toFixed(6)+';'+to[0].toFixed(6)+','+to[1].toFixed(6)+'?overview=full&geometries=geojson&steps=true';
+  if(hdg!=null)u+='&bearings='+Math.round(hdg)%360+',60;';
+  const j=(await getJSON(u,null,15000)).json;if(j.code!=='Ok'||!j.routes||!j.routes.length)throw new Error(j.message||j.code||'no route');
+  const rt=j.routes[0];route.data=rt;route.from=from;prepRoute(rt);findRouteAlerts();return rt}
+function prepRoute(rt){/* cumulative distance plus a grid of segments, for fast "how far along the route" lookups */
+  const co=rt.geometry.coordinates;const P=proj(co[0][1]);const xy=co.map(P);const cum=[0];
+  for(let i=1;i<xy.length;i++)cum.push(cum[i-1]+Math.hypot(xy[i][0]-xy[i-1][0],xy[i][1]-xy[i-1][1]));
+  const C=150,grid=new Map();
+  for(let i=0;i<xy.length-1;i++){const a=xy[i],b=xy[i+1];
+    for(let gx=Math.floor(Math.min(a[0],b[0])/C);gx<=Math.floor(Math.max(a[0],b[0])/C);gx++)
+      for(let gy=Math.floor(Math.min(a[1],b[1])/C);gy<=Math.floor(Math.max(a[1],b[1])/C);gy++){const k=gx+','+gy;let s=grid.get(k);if(!s)grid.set(k,s=[]);s.push(i)}}
+  const steps=[];let acc=0;
+  for(const leg of rt.legs)for(const s of leg.steps){const mt=s.maneuver||{};steps.push({s,at:acc,text:stepText(s),arrow:stepArrow(s),quiet:mt.type==='new name'||(mt.type==='continue'&&(!mt.modifier||mt.modifier==='straight'))});acc+=s.distance}
+  const scale=cum[cum.length-1]/(acc||1);steps.forEach(x=>x.at*=scale);
+  route.geo={co,xy,cum,P,grid,C,total:cum[cum.length-1],steps}}
+function nearestOnRoute(p,from,to){const g=route.geo;let best={d:Infinity,along:0,seg:0};
+  const test=i=>{const a=g.xy[i],b=g.xy[i+1];const dx=b[0]-a[0],dy=b[1]-a[1];const L2=dx*dx+dy*dy;
+    let t=L2?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L2:0;t=Math.max(0,Math.min(1,t));
+    const d=Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy));if(d<best.d)best={d,along:g.cum[i]+t*Math.sqrt(L2),seg:i}};
+  if(from!=null){for(let i=Math.max(0,from);i<Math.min(g.xy.length-1,to);i++)test(i);return best}
+  const gx=Math.floor(p[0]/g.C),gy=Math.floor(p[1]/g.C),seen=new Set();
+  for(let x=gx-1;x<=gx+1;x++)for(let y=gy-1;y<=gy+1;y++){const s=g.grid.get(x+','+y);if(s)for(const i of s)if(!seen.has(i)){seen.add(i);test(i)}}
+  return best}
+function inPoly(pt,poly){const r=poly[0]||[];let c=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const a=r[i],b=r[j];
+  if(((a[1]>pt[1])!==(b[1]>pt[1]))&&(pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0]))c=!c}return c}
+function findRouteAlerts(){if(!route.geo){route.alerts=[];return}const g=route.geo,out=[];
+  const cand=allItems().filter(i=>enabled[i.grp]&&i.kind!=='burn'&&(i.src!=='works'||i.active||i.closed));
+  for(const i of cand){let hit=null;
+    const p=nearestOnRoute(g.P(i.pt));if(p.d<40)hit=p.along;
+    if(hit==null&&i.lines.length){let near=0,first=Infinity;
+      for(const l of i.lines)for(const c of l){const q=nearestOnRoute(g.P(c));if(q.d<30){near++;first=Math.min(first,q.along)}}
+      if(near>=2)hit=first}
+    if(hit==null&&i.polys.length&&/fire|flood|hazmat/.test(i.kind)){for(let k=0;k<g.co.length;k+=4)if(inPoly(g.co[k],i.polys[0])){hit=g.cum[k];break}}
+    if(hit!=null)out.push({i,along:hit})}
+  out.sort((a,b)=>a.along-b.along);route.alerts=out}
+function drawRoute(){if(mapReady&&route.data)map.getSource('route').setData({type:'Feature',geometry:route.data.geometry,properties:{}})}
+function clearRoute(){route.data=route.geo=route.dest=null;route.alerts=[];if(mapReady)map.getSource('route').setData(fc([]))}
+function fitRoute(){const co=route.data.geometry.coordinates;const b=new maplibregl.LngLatBounds(co[0],co[0]);co.forEach(c=>b.extend(c));
+  const sh=$('routeSheet').offsetHeight||300;
+  map.fitBounds(b,{padding:{top:130,bottom:Math.min(innerHeight*.6,sh+30),left:40,right:40},maxZoom:16,duration:700,bearing:0,pitch:0})}
+const alertLabel=i=>i.closed&&i.kind!=='crash'?'Road closed':KINDS[i.kind].label;
+function renderRouteSheet(){const rt=route.data;if(!rt)return;
+  $('rTime').textContent=fmtDur(rt.duration);$('rDist').textContent=fmtDist(rt.distance);
+  $('rArr').textContent='arrive '+clock(new Date(Date.now()+rt.duration*1000));
+  const a=route.alerts;
+  if(!a.length){$('rAlerts').innerHTML='<p class="okmsg">No reported crashes, hazards or works on this route.</p>';return}
+  const cnt={};a.forEach(x=>{const l=alertLabel(x.i);cnt[l]=(cnt[l]||0)+1});
+  $('rAlerts').innerHTML='<div class="sub" style="margin:0 0 4px;color:#ffcc80">'+a.length+' alert'+(a.length>1?'s':'')+' on your route: '+Object.entries(cnt).map(([k,v])=>v+' '+k.toLowerCase()).join(', ')+'</div>'
+    +a.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertLabel(x.i)==='Road closed'?'closed':x.i.kind]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
+  $('rAlerts').querySelectorAll('.ra').forEach(b=>b.onclick=()=>{const x=a[+b.dataset.n];map.flyTo({center:x.i.pt,zoom:15});showPopup(x.i,x.i.pt)})}
+$('rCancel').onclick=()=>{clearRoute();hideSheets();$('q').value='';$('qx').classList.add('hide')};
+function showSheet(id){['routeSheet','layersPanel'].forEach(s=>$(s).classList.toggle('hide',s!==id));$('fabs').classList.add('hide');$('status').classList.add('hide')}
+function hideSheets(){['routeSheet','layersPanel'].forEach(s=>$(s).classList.add('hide'));if(!nav.on){$('fabs').classList.remove('hide');$('status').classList.remove('hide')}}
+$('bLayers').onclick=()=>{renderLayers();showSheet('layersPanel')};
+$('lpClose').onclick=()=>{if(route.data&&!nav.on)showSheet('routeSheet');else hideSheets()};
+$('lpVoice').onclick=()=>{voiceOn=!voiceOn;store.set('voice',voiceOn);renderLayers();setMuteIcon();if(voiceOn)say('Voice is on',true)};
+
+/* ===================== turn instructions ===================== */
+const ORD=['','first','second','third','fourth','fifth','sixth','seventh','eighth'];
+function stepText(s){const m=s.maneuver||{},t=m.type,mod=m.modifier||'';const nm=s.name||s.ref||'';const onto=nm?' onto '+nm:'';
+  const side=mod.includes('left')?'left':mod.includes('right')?'right':'';
+  const turn=()=>mod==='uturn'?'Make a U-turn':mod==='straight'?'Go straight':mod.startsWith('slight')?'Bear '+side:mod.startsWith('sharp')?'Turn sharp '+side:'Turn '+side;
+  switch(t){
+    case 'depart':return 'Head '+compass(m.bearing_after)+(nm?' on '+nm:'');
+    case 'arrive':return 'You have arrived'+(side?', on the '+side:'');
+    case 'turn':return turn()+onto;
+    case 'end of road':return 'At the end of the road, turn '+(side||'')+onto;
+    case 'fork':return 'Keep '+(side||'straight')+' at the fork'+onto;
+    case 'merge':return 'Merge'+(side?' '+side:'')+onto;
+    case 'on ramp':return 'Take the ramp'+(side?' on the '+side:'')+(nm?' to '+nm:'');
+    case 'off ramp':return 'Take the exit'+(side?' on the '+side:'')+(nm?' to '+nm:'');
+    case 'roundabout':case 'rotary':return 'At the roundabout, take the '+(ORD[m.exit]||'next')+' exit'+onto;
+    case 'roundabout turn':return 'At the roundabout, '+lc(turn())+onto;
+    case 'exit roundabout':case 'exit rotary':return 'Exit the roundabout'+onto;
+    case 'continue':return (mod.startsWith('slight')&&side?'Keep '+side:mod==='uturn'?'Make a U-turn':'Continue')+onto;
+    case 'new name':return 'Continue'+onto;
+    default:return (mod&&mod!=='straight'?turn():'Continue')+onto}}
+function compass(b){return ['north','north-east','east','south-east','south','south-west','west','north-west'][Math.round(((b||0)%360)/45)%8]}
+function stepArrow(s){const m=s.maneuver||{},t=m.type,mod=m.modifier||'';
+  if(t==='arrive')return '&#9873;';if(/roundabout|rotary/.test(t))return '&#10227;';
+  return {uturn:'&#8630;','sharp left':'&#8629;','sharp right':'&#8627;',left:'&larr;',right:'&rarr;','slight left':'&#8598;','slight right':'&#8599;'}[mod]||'&uarr;'}
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+
+/* ===================== voice ===================== */
+let voiceOn=store.get('voice',true),voice=null;
+function pickVoice(){const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];
+  voice=vs.find(v=>/en[-_]AU/i.test(v.lang))||vs.find(v=>/en[-_]GB/i.test(v.lang))||vs.find(v=>/^en/i.test(v.lang))||null}
+if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function say(txt,urgent){if(!voiceOn||!window.speechSynthesis)return;try{if(urgent)speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);
+  if(voice)u.voice=voice;u.lang=voice?voice.lang:'en-AU';u.rate=1.02;speechSynthesis.speak(u)}catch(e){}}
+function setMuteIcon(){$('nMute').innerHTML=voiceOn?'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12"/></svg>'
+  :'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'}
+$('nMute').onclick=()=>{voiceOn=!voiceOn;store.set('voice',voiceOn);setMuteIcon();if(!voiceOn&&window.speechSynthesis)speechSynthesis.cancel();toast('Voice '+(voiceOn?'on':'off'),1500)};
+
+/* ===================== driving mode ===================== */
+const nav={on:false,watch:null,follow:true,off:0,lastReroute:0,spoken:{},warned:{},wake:null,progress:0,seg:0};
+$('rGo').onclick=startNav;
+async function startNav(){if(!route.data)return;
+  if(!navigator.geolocation){toast('This phone cannot share location');return}
+  Object.assign(nav,{on:true,follow:true,off:0,spoken:{},warned:{},progress:0,seg:0});
+  hideSheets();['top','fabs','status'].forEach(i=>$(i).classList.add('hide'));['banner','navbar'].forEach(i=>$(i).classList.remove('hide'));
+  meEl.classList.add('nav');setMuteIcon();if(curPopup)curPopup.remove();
+  if(bgWatch!=null){navigator.geolocation.clearWatch(bgWatch);bgWatch=null}
+  const n=route.alerts.length;nav.spoken[0]={far:1,near:1,now:1};
+  say((route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(n?n+' alert'+(n>1?'s':'')+' on your route.':''),true);
+  updateBanner();
+  nav.watch=navigator.geolocation.watchPosition(onFix,e=>{if(e.code===1){toast('Location is blocked, so directions cannot follow you',5000);stopNav()}},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
+  try{if('wakeLock' in navigator)nav.wake=await navigator.wakeLock.request('screen')}catch(e){}
+  if(me){meMarker.setRotation(me.heading||0);followCam(true)}}
+function stopNav(arrived){if(!nav.on)return;nav.on=false;if(nav.watch!=null)navigator.geolocation.clearWatch(nav.watch);nav.watch=null;
+  try{nav.wake&&nav.wake.release()}catch(e){}nav.wake=null;
+  ['banner','navbar','bThen','warn','recenter'].forEach(i=>$(i).classList.add('hide'));$('top').classList.remove('hide');
+  meEl.classList.remove('nav');meMarker.setRotation(0);
+  if(arrived||!route.data){clearRoute();$('q').value='';$('qx').classList.add('hide');hideSheets()}else{showSheet('routeSheet');renderRouteSheet()}
+  map.easeTo({pitch:0,bearing:0,duration:600});startBgWatch()}
+$('nStop').onclick=()=>stopNav(false);
+$('recenter').onclick=()=>{nav.follow=true;$('recenter').classList.add('hide');followCam(true)};
+map.on('dragstart',e=>{if(nav.on&&e.originalEvent){nav.follow=false;$('recenter').classList.remove('hide')}});
+function followCam(snap){if(!me)return;const sp=me.speed||0;
+  map.easeTo({center:me.ll,bearing:me.heading||map.getBearing(),pitch:55,zoom:sp>22?15.4:sp>14?16:16.6,duration:snap?600:950,easing:t=>t,
+    offset:[0,Math.round(innerHeight*.18)]})}
+async function onFix(pos){
+  setMe(pos);const g=route.geo;if(!g||!nav.on)return;
+  const xyp=g.P(me.ll);let n=nearestOnRoute(xyp,nav.seg-5,nav.seg+80);
+  if(n.d>60){const b=nearestOnRoute(xyp);if(b.d<n.d)n=b}
+  if(n.d>60){const b=nearestOnRoute(xyp,0,g.xy.length);if(b.d<n.d)n=b}
+  if(n.d>Math.max(55,me.acc*1.2)&&me.acc<60)nav.off++;else nav.off=0;
+  if(nav.off>=3&&Date.now()-nav.lastReroute>12000){nav.lastReroute=Date.now();nav.off=0;toast('Finding a new route...',2500);
+    try{await fetchRoute(me.ll,route.dest.ll,me.heading);drawRoute();Object.assign(nav,{spoken:{},seg:0,progress:0});say('Route updated',true);updateBanner()}
+    catch(e){toast('Could not update the route')}return}
+  if(n.d<=80){nav.seg=n.seg;nav.progress=Math.max(nav.progress-30,n.along);
+    if(!(me.speed>1.5)){const a=g.co[n.seg],b=g.co[Math.min(n.seg+1,g.co.length-1)];if(a!==b)me.heading=bearing(a,b)}}
+  meMarker.setRotation(me.heading||0);if(nav.follow)followCam();
+  updateBanner();checkHazards();
+  if(g.total-nav.progress<30&&n.d<60){say('You have arrived'+(route.dest&&route.dest.name!=='Dropped pin'?' at '+route.dest.name:''),true);toast('You have arrived',4000);stopNav(true)}}
+function updateBanner(){const g=route.geo;if(!g)return;const p=nav.progress;
+  let k=g.steps.findIndex(x=>x.at>p+5&&!x.quiet);if(k<0)k=g.steps.length-1;const st=g.steps[k];const dist=Math.max(0,st.at-p);
+  $('bArrow').innerHTML=st.arrow;$('bDist').textContent=fmtDist(dist);$('bText').textContent=st.text;
+  const nx=g.steps.slice(k+1).find(x=>!x.quiet);
+  if(nx&&nx.at-st.at<250){$('bThen').innerHTML='Then '+nx.arrow+' '+esc(nx.text);$('bThen').classList.remove('hide')}else $('bThen').classList.add('hide');
+  const remD=Math.max(0,g.total-p),remS=route.data.duration*(remD/(g.total||1));
+  $('nEta').textContent=clock(new Date(Date.now()+remS*1000));$('nRem').textContent=fmtDur(remS)+' \u00b7 '+fmtDist(remD);
+  if(!nav.on)return;
+  const sp=nav.spoken[k]||(nav.spoken[k]={});const fast=(me&&me.speed||0)>16;
+  const thenTxt=nx&&nx.at-st.at<200&&nx.s.maneuver.type!=='arrive'?', then '+lc(nx.text):'';
+  if(!sp.far&&dist<(fast?1500:700)&&dist>(fast?600:300)){sp.far=1;say('In '+sayDist(dist)+', '+lc(st.text))}
+  else if(!sp.near&&dist<=(fast?450:200)&&dist>60){sp.near=sp.far=1;say('In '+sayDist(dist)+', '+lc(st.text))}
+  else if(!sp.now&&dist<=(fast?60:35)){sp.now=sp.near=sp.far=1;say(st.text+thenTxt,true)}}
+function checkHazards(){const p=nav.progress;const ahead=route.alerts.filter(x=>x.along>p-20&&x.along-p<3000);
+  if(!ahead.length){$('warn').classList.add('hide');return}
+  const x=ahead[0],d=Math.max(0,x.along-p),i=x.i,lab=alertLabel(i);
+  const w=$('warn');w.querySelector('img').src=ICON_URL[lab==='Road closed'?'closed':i.kind];
+  w.querySelector('b').textContent=lab+' '+(d<30?'here':fmtDist(d)+' ahead');
+  w.querySelector('small').textContent=[i.road,i.title!==lab?i.title:''].filter(Boolean).join(' \u00b7 ');
+  w.classList.remove('hide');
+  const ws=nav.warned[i.id]||(nav.warned[i.id]={});
+  if(!ws.a&&d<=1500&&d>300){ws.a=1;say(lab+' reported '+sayDist(d)+' ahead')}
+  else if(!ws.b&&d<=300){ws.a=ws.b=1;say(lab+' ahead, take care')}}
+
+/* ===================== start up ===================== */
+renderChips();updateStatus();setMuteIcon();
+loadLive();setInterval(()=>{if(document.visibilityState==='visible')loadLive()},LIVE_EVERY);
+if(enabled.works)loadWorks();setInterval(()=>{if(enabled.works&&document.visibilityState==='visible')loadWorks(true)},WORKS_EVERY);
+document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;
+  if(Date.now()-(feedState.live.at||0)>LIVE_EVERY)loadLive();
+  if(nav.on&&'wakeLock' in navigator){try{nav.wake=await navigator.wakeLock.request('screen')}catch(e){}}});
+if(navigator.permissions&&navigator.permissions.query)navigator.permissions.query({name:'geolocation'}).then(s=>{if(s.state==='granted')locateOnce(!localStorage.getItem('roadie.center'))}).catch(()=>{});
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
