@@ -109,6 +109,17 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 .legend span{display:flex;align-items:center;gap:4px}
 .legend img{width:20px;height:20px}
 .fine{font-size:11px;color:var(--mut);margin-top:8px}
+.fab.rep{background:#ff9800;color:#241400}
+#repGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 12px}
+.rt{background:var(--card2);border-radius:16px;padding:12px 4px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:13px;font-weight:600}
+.rt img{width:48px;height:48px}
+.inp{width:100%;min-width:0;background:var(--card2);border:0;border-radius:12px;color:var(--txt);padding:12px;font-size:15px;outline:0}
+.inp::placeholder{color:var(--mut)}
+.pp .row{gap:8px}
+.pp .act.gray{background:var(--card2);color:var(--txt)}
+.pp .act.red{background:#ff4d4f;color:#fff}
+.pp .act:disabled{opacity:.45}
+@media (max-width:430px){.chip .lbl{display:none}.chip{padding:5px 9px 5px 5px}}
 </style>
 </head>
 <body>
@@ -123,6 +134,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <div id="chips"></div>
 </div>
 <div id="fabs">
+  <button class="fab rep hide" id="bReport" aria-label="Report"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   <button class="fab" id="bLayers" aria-label="Layers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
   <button class="fab" id="bLocate" aria-label="My location"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
 </div>
@@ -141,11 +153,20 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <div class="row" style="margin-top:10px"><button class="btn" id="lpVoice">Voice: on</button><button class="btn go" id="lpClose">Done</button></div>
   <div class="fine">Alerts refresh every 3 minutes, roadworks every 6 hours. Roadie has no live traffic speeds, so routes do not avoid traffic jams. Always follow road signs and police directions.</div>
 </div>
+<div id="reportSheet" class="sheet hide" style="z-index:8">
+  <h3>What do you see?</h3>
+  <div class="sub" id="repWhere">At your location</div>
+  <div id="repGrid"></div>
+  <input id="repNote" class="inp" maxlength="120" placeholder="Add a note (optional)" autocomplete="off">
+  <div class="row" style="margin-top:10px"><input id="repName" class="inp" maxlength="20" placeholder="Your name (optional)" autocomplete="off"><button class="btn" id="repCancel" style="flex:none;padding:13px 20px">Cancel</button></div>
+  <div class="fine">Tap a picture to send it. Everyone using Roadie can see reports, and they disappear by themselves after a while.</div>
+</div>
 <div id="banner" class="hide"><div id="bArrow">&uarr;</div><div><div id="bDist">--</div><div id="bText"></div></div></div>
 <div id="bThen" class="hide"></div>
 <div id="warn" class="hide"><img alt=""><div><b></b><small></small></div></div>
 <div id="navbar" class="hide">
   <button class="fab" id="nMute" aria-label="Voice"></button>
+  <button class="fab hide" id="nReport" aria-label="Report" style="background:#ff9800;color:#241400"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
   <div class="eta"><b id="nEta">--</b><div id="nRem"></div></div>
   <button class="btn stop" id="nStop" style="flex:none;padding:12px 18px">Stop</button>
 </div>
@@ -163,6 +184,8 @@ const MAP_STYLE='https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.jso
 const OSRM='https://router.project-osrm.org/route/v1/driving/';
 const PHOTON='https://photon.komoot.io/api/';
 const MELB=[144.9631,-37.8136];
+/* Driver reports (Part 2): paste your Firebase web app config here, or leave null to turn reports off */
+const FIREBASE_CONFIG={apiKey:"AIzaSyAlPT_Kc6mPxHwzgTVs-KfRVKODz9TdFbU",authDomain:"roadie-c0ce8.firebaseapp.com",projectId:"roadie-c0ce8",storageBucket:"roadie-c0ce8.firebasestorage.app",messagingSenderId:"296311896319",appId:"1:296311896319:web:8753beeb72c79b52b934ca"};
 const LIVE_EVERY=3*60*1000, WORKS_EVERY=6*60*60*1000, WORKS_MAX_PAGES=20;
 
 /* ===================== kinds and icons ===================== */
@@ -179,14 +202,22 @@ const KINDS={
   rescue:  {label:'Rescue',            col:'#d81b60', g:'plus'},
   hazmat:  {label:'Hazardous material',col:'#7cb342', g:'warn'},
   weather: {label:'Weather warning',   col:'#00897b', g:'wind'},
-  emerg:   {label:'Emergency',         col:'#5e35b1', g:'warn'}
+  emerg:   {label:'Emergency',         col:'#5e35b1', g:'warn'},
+  u_police:{label:'Police',            col:'#1565c0', g:'police', crowd:1},
+  u_crash: {label:'Crash',             col:'#e53935', g:'crash',  crowd:1},
+  u_jam:   {label:'Traffic jam',       col:'#c62828', g:'car',    crowd:1},
+  u_hazard:{label:'Hazard',            col:'#fb8c00', g:'warn',   crowd:1},
+  u_closed:{label:'Road closed',       col:'#b71c1c', g:'closed', crowd:1},
+  u_camera:{label:'Speed camera',      col:'#546e7a', g:'camera', crowd:1}
 };
 const GROUPS={
   hazards:{label:'Crashes and hazards', short:'Crashes', sub:'Crashes, closures, road damage, stopped cars', icon:'crash', on:true},
   floods: {label:'Flooded roads',       short:'Floods',  sub:'Water over the road',                          icon:'flood', on:true},
   works:  {label:'Roadworks',           short:'Works',sub:'Planned works and events (bigger download)',  icon:'works', on:true},
-  emerg:  {label:'Fires and emergencies',short:'Fires',  sub:'VicEmergency incidents and warnings',          icon:'fire',  on:true}
+  emerg:  {label:'Fires and emergencies',short:'Fires',  sub:'VicEmergency incidents and warnings',          icon:'fire',  on:true},
+  reports:{label:'Driver reports',      short:'Reports', sub:'Police, jams and hazards from Roadie drivers', icon:'u_police', on:true}
 };
+const groupList=()=>Object.entries(GROUPS).filter(([g])=>g!=='reports'||FIREBASE_CONFIG);
 function drawGlyph(c,g,s){
   c.save();c.translate(s/2,s/2);const u=s/64;c.scale(u,u);
   c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';
@@ -203,6 +234,10 @@ function drawGlyph(c,g,s){
     case 'fire': c.beginPath();c.moveTo(0,-18);c.bezierCurveTo(10,-6,15,0,13,8);c.bezierCurveTo(11,16,4,18,0,18);c.bezierCurveTo(-4,18,-11,16,-13,8);
       c.bezierCurveTo(-14,1,-8,-3,-6,-10);c.bezierCurveTo(-3,-4,-2,-2,0,-1);c.bezierCurveTo(2,-7,1,-12,0,-18);c.fill();break;
     case 'plus': c.fillRect(-4,-14,8,28);c.fillRect(-14,-4,28,8);break;
+    case 'police': P([[0,-18],[15,-12],[13,5],[0,18],[-13,5],[-15,-12]],1);c.fillStyle='#0007';
+      {const pts=[];for(let i=0;i<10;i++){const r=i%2?3.5:8,a=-Math.PI/2+i*Math.PI/5;pts.push([r*Math.cos(a),r*Math.sin(a)-1])}P(pts,1)}break;
+    case 'camera': c.fillRect(-16,-8,32,21);c.fillRect(-6,-14,12,7);c.fillStyle='#0008';c.beginPath();c.arc(0,2,7,0,7);c.fill();
+      c.fillStyle='#fff';c.beginPath();c.arc(0,2,3,0,7);c.fill();break;
     case 'wind': c.beginPath();c.moveTo(-16,-6);c.lineTo(8,-6);c.arc(8,-11,5,Math.PI/2,-Math.PI/2,true);c.moveTo(-16,3);c.lineTo(12,3);c.moveTo(-16,11);c.lineTo(4,11);c.stroke();break;
   }
   c.restore();
@@ -210,7 +245,7 @@ function drawGlyph(c,g,s){
 function makeIcon(kind,size){
   const k=KINDS[kind],cv=document.createElement('canvas');cv.width=cv.height=size;const c=cv.getContext('2d');
   c.beginPath();c.arc(size/2,size/2,size/2-size*.07,0,7);c.fillStyle=k.col;c.fill();
-  c.lineWidth=size*.07;c.strokeStyle='#fff';c.stroke();
+  c.lineWidth=size*(k.crowd?.1:.07);c.strokeStyle=k.crowd?'#33ccff':'#fff';c.stroke();
   drawGlyph(c,k.g,size*.9);return cv;
 }
 const ICON_URL={};
@@ -222,7 +257,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const tc=s=>String(s||'').trim().toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g,(m,a,b)=>a+b.toUpperCase());
 function fmtDist(m){if(m<950){const r=m<100?10:50;return Math.max(r,Math.round(m/r)*r)+' m'}return (m<9500?(m/1000).toFixed(1):Math.round(m/1000))+' km'}
 function sayDist(m){if(m<950){const r=m<100?10:50;return Math.max(r,Math.round(m/r)*r)+' metres'}const k=m<9500?(Math.round(m/100)/10):Math.round(m/1000);return k+(k===1?' kilometre':' kilometres')}
-function fmtDur(s){const m=Math.max(1,Math.round(s/60));if(m<60)return m+' min';const h=Math.floor(m/60);return h+' h '+(m%60)+' min'}
+function fmtDur(s){const m=Math.max(1,Math.round(s/60));if(m<60)return m+' min';const h=Math.floor(m/60);return h+' h'+(m%60?' '+(m%60)+' min':'')}
 function clock(d){return d.toLocaleTimeString('en-AU',{hour:'numeric',minute:'2-digit'})}
 function melOffset(t){/* Melbourne is UTC+11 from the first Sunday in October to the first Sunday in April, else UTC+10 */
   const y=new Date(t).getUTCFullYear();const fs=m=>{const x=new Date(Date.UTC(y,m,1));return 1+((7-x.getUTCDay())%7)};
@@ -253,8 +288,8 @@ function thin(line,max){const r=a=>[Math.round(a[0]*1e5)/1e5,Math.round(a[1]*1e5
   const out=[],step=(line.length-1)/(max-1);for(let i=0;i<max;i++)out.push(r(line[Math.round(i*step)]));return out}
 
 /* ===================== data ===================== */
-let items={live:[],works:[],emerg:[]};
-const feedState={live:{},works:{},emerg:{}};
+let items={live:[],works:[],emerg:[],reports:[]};
+const feedState={live:{},works:{},emerg:{},reports:{}};
 const enabled=Object.assign(Object.fromEntries(Object.entries(GROUPS).map(([k,v])=>[k,v.on])),store.get('layers',{}));
 const uid=()=>Math.random().toString(36).slice(2);
 function unplannedKind(p){const t=(p.eventType||'').toLowerCase(),s=(p.eventSubType||p.eventSubtype||'').toLowerCase(),imp=((p.impact||{}).impactType||'').toLowerCase();
@@ -362,11 +397,12 @@ map.on('load',()=>{
 map.on('moveend',()=>{if(!nav.on){const c=map.getCenter();store.set('center',[+c.lng.toFixed(5),+c.lat.toFixed(5)]);store.set('zoom',+map.getZoom().toFixed(2))}});
 map.on('contextmenu',e=>{if(nav.on)return;const ll=e.lngLat.toArray();const lab=ll[1].toFixed(5)+', '+ll[0].toFixed(5);
   const pop=new maplibregl.Popup({maxWidth:'260px'}).setLngLat(ll)
-    .setHTML('<div class="pp"><div class="road">Dropped pin</div><div class="meta">'+lab+'</div><button class="act">Directions to here</button></div>').addTo(map);
-  pop.getElement().querySelector('.act').onclick=()=>{pop.remove();planTo({name:'Dropped pin',addr:lab,ll})}});
-const PRIO={crash:1,closed:2,fire:3,flood:4,rescue:5,vehicle:6,hazard:7,hazmat:8,weather:9,emerg:10,works:20,event:21,burn:30};
+    .setHTML('<div class="pp"><div class="road">Dropped pin</div><div class="meta">'+lab+'</div><button class="act">Directions to here</button>'+(FB?'<button class="act gray" data-a="rep">Report something here</button>':'')+'</div>').addTo(map);
+  pop.getElement().querySelector('.act').onclick=()=>{pop.remove();planTo({name:'Dropped pin',addr:lab,ll})};
+  const rb=pop.getElement().querySelector('[data-a=rep]');if(rb)rb.onclick=()=>{pop.remove();openReport(ll)}});
+const PRIO={u_crash:1,u_closed:2,u_police:3,u_hazard:7,u_jam:8,u_camera:9,crash:1,closed:2,fire:3,flood:4,rescue:5,vehicle:6,hazard:7,hazmat:8,weather:9,emerg:10,works:20,event:21,burn:30};
 let byId=new Map();
-const allItems=()=>[...items.live,...items.emerg,...items.works];
+const allItems=()=>[...items.reports,...items.live,...items.emerg,...items.works];
 const visibleItems=()=>allItems().filter(i=>enabled[i.grp]);
 function refreshMap(){
   const vis=visibleItems();byId=new Map(vis.map(i=>[i.id,i]));
@@ -381,19 +417,21 @@ function refreshMap(){
 function updateStatus(){const parts=[],L=feedState.live,W=feedState.works,E=feedState.emerg;
   if(L.ok===false)parts.push('<span class="err">Traffic alerts: '+esc(L.err)+'</span>');
   if(E.ok===false)parts.push('<span class="err">VicEmergency: '+esc(E.err)+'</span>');
+  if(feedState.reports.ok===false)parts.push('<span class="err">Driver reports: '+esc(feedState.reports.err)+'</span>');
   if(enabled.works){if(W.loading)parts.push('Loading roadworks, part '+W.loading+'...');else if(W.ok===false)parts.push('<span class="err">Roadworks: '+esc(W.err)+'</span>')}
   const t=Math.max(L.ok?L.at:0,E.ok?E.at:0);
   if(t)parts.unshift('<b>'+visibleItems().length+'</b> alerts on the map &middot; updated '+clock(new Date(t)));
   $('status').innerHTML=parts.join('<br>')||'Loading road alerts...'}
 function renderChips(){const all=allItems();
-  $('chips').innerHTML=Object.entries(GROUPS).map(([g,v])=>{const n=all.filter(i=>i.grp===g).length;
-    return '<button class="chip'+(enabled[g]?' on':'')+'" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" width="17" height="17" alt="">'+esc(v.short)+' <em>'+n+'</em></button>'}).join('');
+  $('chips').innerHTML=groupList().map(([g,v])=>{const n=all.filter(i=>i.grp===g).length;
+    return '<button class="chip'+(enabled[g]?' on':'')+'" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" width="17" height="17" alt=""><span class="lbl">'+esc(v.short)+'</span> <em>'+n+'</em></button>'}).join('');
   $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>toggleGroup(b.dataset.g))}
 function toggleGroup(g){enabled[g]=!enabled[g];store.set('layers',enabled);
   if(g==='works'&&enabled.works&&!items.works.length)loadWorks();refreshMap();renderLayers()}
 function renderLayers(){
-  $('lrList').innerHTML=Object.entries(GROUPS).map(([g,v])=>'<div class="lr" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" alt=""><div>'+esc(v.label)+'<small>'+esc(v.sub)+'</small></div><span class="sw'+(enabled[g]?' on':'')+'"></span></div>').join('')
-   +'<div class="legend">'+['crash','closed','hazard','vehicle','flood','works','event','fire','burn','rescue','weather'].map(k=>'<span><img src="'+ICON_URL[k]+'" alt="">'+KINDS[k].label+'</span>').join('')+'</div>';
+  $('lrList').innerHTML=groupList().map(([g,v])=>'<div class="lr" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" alt=""><div>'+esc(v.label)+'<small>'+esc(v.sub)+'</small></div><span class="sw'+(enabled[g]?' on':'')+'"></span></div>').join('')
+   +'<div class="legend">'+['crash','closed','hazard','vehicle','flood','works','event','fire','burn','rescue','weather'].concat(FIREBASE_CONFIG?['u_police','u_jam','u_camera']:[]).map(k=>'<span><img src="'+ICON_URL[k]+'" alt="">'+KINDS[k].label+'</span>').join('')+'</div>'
+   +(FIREBASE_CONFIG?'<div class="fine" style="margin-top:2px">A blue ring means a Roadie driver reported it.</div>':'');
   $('lrList').querySelectorAll('.lr').forEach(r=>r.onclick=()=>toggleGroup(r.dataset.g));
   $('lpVoice').textContent='Voice: '+(voiceOn?'on':'off')}
 function popupHTML(i,withDir){const k=KINDS[i.kind];let d=i.desc||'';if(d.length>700)d=d.slice(0,700)+'...';
@@ -407,6 +445,7 @@ function popupHTML(i,withDir){const k=KINDS[i.kind];let d=i.desc||'';if(d.length
     +(withDir?'<button class="act">Directions to here</button>':'')+'</div>'}
 let curPopup=null;
 function showPopup(i,ll){if(curPopup)curPopup.remove();
+  if(i.src==='crowd')return showReportPopup(i);
   curPopup=new maplibregl.Popup({maxWidth:'300px',offset:14}).setLngLat(ll).setHTML(popupHTML(i,!route.data)).addTo(map);
   const b=curPopup.getElement().querySelector('.act');if(b)b.onclick=()=>{curPopup.remove();planTo({name:i.road||KINDS[i.kind].label,addr:i.place||'',ll:i.pt})}}
 
@@ -505,6 +544,7 @@ function fitRoute(){const co=route.data.geometry.coordinates;const b=new maplibr
   const sh=$('routeSheet').offsetHeight||300;
   map.fitBounds(b,{padding:{top:130,bottom:Math.min(innerHeight*.6,sh+30),left:40,right:40},maxZoom:16,duration:700,bearing:0,pitch:0})}
 const alertLabel=i=>i.closed&&i.kind!=='crash'?'Road closed':KINDS[i.kind].label;
+const alertIcon=i=>i.closed&&i.kind!=='crash'?'closed':i.kind;
 function renderRouteSheet(){const rt=route.data;if(!rt)return;
   $('rTime').textContent=fmtDur(rt.duration);$('rDist').textContent=fmtDist(rt.distance);
   $('rArr').textContent='arrive '+clock(new Date(Date.now()+rt.duration*1000));
@@ -512,11 +552,11 @@ function renderRouteSheet(){const rt=route.data;if(!rt)return;
   if(!a.length){$('rAlerts').innerHTML='<p class="okmsg">No reported crashes, hazards or works on this route.</p>';return}
   const cnt={};a.forEach(x=>{const l=alertLabel(x.i);cnt[l]=(cnt[l]||0)+1});
   $('rAlerts').innerHTML='<div class="sub" style="margin:0 0 4px;color:#ffcc80">'+a.length+' alert'+(a.length>1?'s':'')+' on your route: '+Object.entries(cnt).map(([k,v])=>v+' '+k.toLowerCase()).join(', ')+'</div>'
-    +a.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertLabel(x.i)==='Road closed'?'closed':x.i.kind]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
+    +a.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertIcon(x.i)]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
   $('rAlerts').querySelectorAll('.ra').forEach(b=>b.onclick=()=>{const x=a[+b.dataset.n];map.flyTo({center:x.i.pt,zoom:15});showPopup(x.i,x.i.pt)})}
 $('rCancel').onclick=()=>{clearRoute();hideSheets();$('q').value='';$('qx').classList.add('hide')};
-function showSheet(id){['routeSheet','layersPanel'].forEach(s=>$(s).classList.toggle('hide',s!==id));$('fabs').classList.add('hide');$('status').classList.add('hide')}
-function hideSheets(){['routeSheet','layersPanel'].forEach(s=>$(s).classList.add('hide'));if(!nav.on){$('fabs').classList.remove('hide');$('status').classList.remove('hide')}}
+function showSheet(id){['routeSheet','layersPanel','reportSheet'].forEach(s=>$(s).classList.toggle('hide',s!==id));$('fabs').classList.add('hide');$('status').classList.add('hide')}
+function hideSheets(){['routeSheet','layersPanel','reportSheet'].forEach(s=>$(s).classList.add('hide'));if(!nav.on){$('fabs').classList.remove('hide');$('status').classList.remove('hide')}}
 $('bLayers').onclick=()=>{renderLayers();showSheet('layersPanel')};
 $('lpClose').onclick=()=>{if(route.data&&!nav.on)showSheet('routeSheet');else hideSheets()};
 $('lpVoice').onclick=()=>{voiceOn=!voiceOn;store.set('voice',voiceOn);renderLayers();setMuteIcon();if(voiceOn)say('Voice is on',true)};
@@ -615,7 +655,7 @@ function updateBanner(){const g=route.geo;if(!g)return;const p=nav.progress;
 function checkHazards(){const p=nav.progress;const ahead=route.alerts.filter(x=>x.along>p-20&&x.along-p<3000);
   if(!ahead.length){$('warn').classList.add('hide');return}
   const x=ahead[0],d=Math.max(0,x.along-p),i=x.i,lab=alertLabel(i);
-  const w=$('warn');w.querySelector('img').src=ICON_URL[lab==='Road closed'?'closed':i.kind];
+  const w=$('warn');w.querySelector('img').src=ICON_URL[alertIcon(i)];
   w.querySelector('b').textContent=lab+' '+(d<30?'here':fmtDist(d)+' ahead');
   w.querySelector('small').textContent=[i.road,i.title!==lab?i.title:''].filter(Boolean).join(' \u00b7 ');
   w.classList.remove('hide');
@@ -623,8 +663,73 @@ function checkHazards(){const p=nav.progress;const ahead=route.alerts.filter(x=>
   if(!ws.a&&d<=1500&&d>300){ws.a=1;say(lab+' reported '+sayDist(d)+' ahead')}
   else if(!ws.b&&d<=300){ws.a=ws.b=1;say(lab+' ahead, take care')}}
 
+/* ===================== driver reports (Firebase) ===================== */
+const REPORT_TYPES=[['u_police','Police',60],['u_crash','Crash',120],['u_jam','Traffic jam',45],['u_hazard','Hazard',180],['u_closed','Road closed',300],['u_camera','Speed camera',240]];
+const FB_BASE='https://www.gstatic.com/firebasejs/10.12.2/';
+let FB=null,fbUser=null,repUnsub=null,repTimer=null,repAt=null;
+const voted=store.get('voted',{});
+async function fbStart(){
+  if(!FIREBASE_CONFIG||!FIREBASE_CONFIG.apiKey)return;
+  try{let m=window.__fbMock;
+    if(!m){const r=await Promise.all(['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(f=>import(FB_BASE+f)));m={a:r[0],au:r[1],fs:r[2]}}
+    const app=m.a.initializeApp(FIREBASE_CONFIG);FB={au:m.au,fs:m.fs,auth:m.au.getAuth(app),db:m.fs.getFirestore(app)};
+    $('bReport').classList.remove('hide');$('nReport').classList.remove('hide');
+    FB.au.onAuthStateChanged(FB.auth,u=>{fbUser=u;if(u)subReports()});
+    if(!FB.auth.currentUser)await FB.au.signInAnonymously(FB.auth);
+  }catch(e){feedState.reports={ok:false,err:fbErr(e)};updateStatus()}}
+function fbErr(e){const c=String(e&&(e.code||e.message)||e);
+  if(/admin-restricted|operation-not-allowed/.test(c))return 'turn on Anonymous sign-in in Firebase';
+  if(/permission/i.test(c))return 'database rules blocked it';
+  if(/network|unavailable|fetch/i.test(c))return 'offline';return c.replace(/^(auth|firestore)\//,'')}
+const tsMs=t=>t&&typeof t.toMillis==='function'?t.toMillis():(typeof t==='number'?t:NaN);
+function reportItem(id,r,now){if(!r||!KINDS[r.type]||!KINDS[r.type].crowd||!isFinite(r.lat)||!isFinite(r.lng))return null;
+  const exp=tsMs(r.exp),up=r.up|0,down=r.down|0;if(!(exp>now))return null;if(down>=2&&down>up)return null;
+  return {id:'r_'+id,docId:id,src:'crowd',grp:'reports',kind:r.type,title:KINDS[r.type].label+' reported',road:'',place:'',tags:[],closed:false,
+    desc:r.note||'',updatedMs:tsMs(r.at),expMs:exp,by:r.by,name:r.name||'A driver',up,down,active:true,pt:[r.lng,r.lat],lines:[],polys:[]}}
+function subReports(){const f=FB.fs;if(repUnsub)repUnsub();clearTimeout(repTimer);
+  const q=f.query(f.collection(FB.db,'reports'),f.where('exp','>',f.Timestamp.now()),f.limit(500));
+  repUnsub=f.onSnapshot(q,snap=>{const now=Date.now(),out=[];
+      snap.forEach(d=>{const it=reportItem(d.id,d.data({serverTimestamps:'estimate'}),now);if(it)out.push(it)});
+      items.reports=out;feedState.reports={ok:true,at:Date.now()};refreshMap()},
+    e=>{feedState.reports={ok:false,err:fbErr(e)};updateStatus()});
+  repTimer=setTimeout(subReports,20*60000)}
+setInterval(()=>{const now=Date.now(),n=items.reports.length;items.reports=items.reports.filter(i=>i.expMs>now);if(items.reports.length!==n)refreshMap()},60000);
+function openReport(ll){if(!FB){toast('Driver reports are not set up yet');return}
+  repAt=ll||null;if(curPopup)curPopup.remove();
+  $('repGrid').innerHTML=REPORT_TYPES.map(t=>'<button class="rt" data-t="'+t[0]+'"><img src="'+ICON_URL[t[0]]+'" alt="">'+t[1]+'</button>').join('');
+  $('repGrid').querySelectorAll('.rt').forEach(b=>b.onclick=()=>sendReport(b.dataset.t));
+  $('repName').value=store.get('name','');
+  $('repWhere').textContent=ll?'At the dropped pin':(me&&Date.now()-me.t<60000?'At your location (within '+Math.round(me.acc)+' m)':'At your location');
+  if(nav.on)$('reportSheet').classList.remove('hide');else showSheet('reportSheet')}
+function closeReport(){$('reportSheet').classList.add('hide');if(nav.on)return;if(route.data)showSheet('routeSheet');else hideSheets()}
+$('bReport').onclick=()=>openReport(null);$('nReport').onclick=()=>openReport(null);$('repCancel').onclick=closeReport;
+async function sendReport(type){if(!FB||!fbUser){toast('Driver reports are not connected yet');return}
+  let ll=repAt;
+  if(!ll){if(!me||Date.now()-me.t>60000){const m=await locateOnce(false);if(!m){toast('Turn on location to report where you are',4500);return}}ll=me.ll}
+  const f=FB.fs,t=REPORT_TYPES.find(x=>x[0]===type),name=$('repName').value.trim().slice(0,20),note=$('repNote').value.trim().slice(0,120);
+  store.set('name',name);closeReport();$('repNote').value='';
+  toast('Thanks! '+t[1]+' is on the map for '+fmtDur(t[2]*60),3500);
+  try{await f.addDoc(f.collection(FB.db,'reports'),{type,lat:+ll[1].toFixed(6),lng:+ll[0].toFixed(6),note,by:fbUser.uid,name:name||'A driver',
+      at:f.serverTimestamp(),exp:f.Timestamp.fromMillis(Date.now()+t[2]*60000),up:0,down:0})}
+  catch(e){toast('Your report did not send ('+fbErr(e)+')',5000)}}
+function showReportPopup(i){const mine=fbUser&&i.by===fbUser.uid,v=voted[i.docId];
+  const html='<div class="pp"><h4><img src="'+ICON_URL[i.kind]+'" alt="">'+esc(i.title)+'</h4>'+(i.desc?'<p>'+esc(i.desc)+'</p>':'')
+    +'<div class="meta">By '+esc(mine?'you':i.name)+(i.updatedMs?' &middot; '+ago(i.updatedMs):'')+(i.up?' &middot; '+i.up+' said still there':'')+'<br>Goes away in '+fmtDur((i.expMs-Date.now())/1000)+'</div>'
+    +(mine?'<button class="act red" data-a="del">Remove my report</button>'
+      :'<div class="row"><button class="act" data-a="up"'+(v?' disabled':'')+'>Still there</button><button class="act gray" data-a="down"'+(v?' disabled':'')+'>Not there</button></div>'+(v?'<div class="meta">Thanks, you already voted.</div>':''))+'</div>';
+  curPopup=new maplibregl.Popup({maxWidth:'300px',offset:14}).setLngLat(i.pt).setHTML(html).addTo(map);
+  curPopup.getElement().querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>b.dataset.a==='del'?removeReport(i):voteReport(i,b.dataset.a))}
+async function voteReport(i,dir){if(!FB||!fbUser)return;const f=FB.fs,ref=f.doc(FB.db,'reports',i.docId);
+  voted[i.docId]=dir;store.set('voted',voted);if(curPopup)curPopup.remove();
+  try{if(dir==='up')await f.updateDoc(ref,{up:f.increment(1),exp:f.Timestamp.fromMillis(Math.max(i.expMs,Date.now()+30*60000))});
+    else await f.updateDoc(ref,{down:f.increment(1)});
+    toast(dir==='up'?'Thanks, it stays on the map longer':'Thanks for letting everyone know',2500)}
+  catch(e){delete voted[i.docId];store.set('voted',voted);toast('Your vote did not save ('+fbErr(e)+')',4500)}}
+async function removeReport(i){if(!FB)return;if(curPopup)curPopup.remove();
+  try{await FB.fs.deleteDoc(FB.fs.doc(FB.db,'reports',i.docId));toast('Report removed',2000)}catch(e){toast('Could not remove it ('+fbErr(e)+')',4500)}}
+
 /* ===================== start up ===================== */
-renderChips();updateStatus();setMuteIcon();
+renderChips();updateStatus();setMuteIcon();fbStart();
 loadLive();setInterval(()=>{if(document.visibilityState==='visible')loadLive()},LIVE_EVERY);
 if(enabled.works)loadWorks();setInterval(()=>{if(enabled.works&&document.visibilityState==='visible')loadWorks(true)},WORKS_EVERY);
 document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;

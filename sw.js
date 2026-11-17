@@ -1,5 +1,5 @@
 /* Roadie offline helper. Bump VERSION when you change this file. */
-const VERSION='roadie-v1';
+const VERSION='roadie-v2';
 const CORE=['./','index.html','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
 const LIBS='roadie-libs';
 self.addEventListener('install',e=>{
