@@ -1,6 +1,6 @@
 /* Roadie offline helper. Bump VERSION when you change this file. */
-const VERSION='roadie-v4';
-const CORE=['./','index.html','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
+const VERSION='roadie-v5';
+const CORE=['./','index.html','cameras.json','manifest.webmanifest','icon-180.png','icon-192.png','icon-512.png'];
 const LIBS='roadie-libs';
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(VERSION).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));

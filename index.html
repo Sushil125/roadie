@@ -97,7 +97,7 @@ body.srch #res{flex:1;max-height:none;margin:12px 0 0;border-radius:0;box-shadow
 #warn img{width:40px;height:40px}
 #warn b{display:block;font-size:16px}
 #warn small{color:var(--warnT)}
-#navbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-radius:22px 22px 0 0;padding:12px 14px calc(12px + var(--sb));display:flex;align-items:center;gap:8px;box-shadow:0 -6px 24px var(--sh)}
+#navbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-radius:22px 22px 0 0;padding:12px 12px calc(12px + var(--sb));display:flex;align-items:center;gap:7px;box-shadow:0 -6px 24px var(--sh)}
 #speed{flex:none;width:58px;height:58px;border-radius:50%;background:var(--card2);border:3px solid var(--sw);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 #speed b{font-size:21px;font-weight:800}
 #speed small{font-size:10px;color:var(--mut);margin-top:1px}
@@ -105,6 +105,26 @@ body.srch #res{flex:1;max-height:none;margin:12px 0 0;border-radius:0;box-shadow
 #navbar .eta b{display:block;font-size:24px;font-weight:800;color:var(--ok);line-height:1.1}
 #navbar .eta div{color:var(--mut);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #navbar .fab{width:46px;height:46px;background:var(--card2);box-shadow:none;flex:none}
+#speed.over{border-color:#ff3b30;background:#ff3b3022}
+#speed.over b{color:#ff5245}
+#limit{flex:none;width:52px;height:52px;border-radius:50%;background:#fff;border:6px solid #d32f2f;display:none;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#111;line-height:1;box-shadow:0 3px 10px var(--sh)}
+#limit.show{display:flex}
+#navbar.lim #speed{width:50px;height:50px;border-width:3px}
+#navbar.lim #speed b{font-size:18px}
+#navbar.lim #limit{width:46px;height:46px;border-width:5px;font-size:17px}
+#navbar.lim .fab{width:42px;height:42px}
+#navbar.lim .eta b{font-size:20px}
+#navbar.lim .eta div{font-size:12px}
+#navbar.lim .btn.stop{padding:10px 12px;font-size:14px}
+#roadbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#roadbar .pill{display:inline-flex;align-items:center;gap:7px;background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--line);color:var(--fg);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;box-shadow:0 4px 14px var(--sh)}
+#roadbar .pill img{width:18px;height:18px}
+#roadbar .pill.cam{border-color:#ffb300;color:#ffb300}
+#fuelList .fu{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:var(--fg);text-align:left;cursor:pointer}
+#fuelList .fu div{flex:1;min-width:0}
+#fuelList .fu small{display:block;color:var(--mut);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fuelList .fu b{font-size:19px;font-weight:800;color:var(--ok);flex:none}
+#fuelSheet .seg{margin:4px 0 2px}
 #nStop{flex:none;padding:12px 15px;border-radius:23px}
 #recenter{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--sb));z-index:6;background:var(--card);border-radius:24px;padding:11px 18px;box-shadow:0 4px 14px var(--sh);font-weight:700;color:var(--accT);display:flex;align-items:center;gap:8px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(200px + var(--sb));z-index:9;background:#000d;color:#fff;padding:9px 14px;border-radius:12px;font-size:14px;max-width:86%;text-align:center}
@@ -175,6 +195,7 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
 </div>
 <div id="fabs">
   <button class="fab rep hide" id="bReport" aria-label="Report"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button class="fab hide" id="bFuel" aria-label="Fuel prices"><b style="font-size:17px;font-weight:800">$</b></button>
   <button class="fab" id="bLayers" aria-label="Layers"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></button>
   <button class="fab" id="bLocate" aria-label="My location"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
 </div>
@@ -186,12 +207,22 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
   <div id="rAlerts"></div>
   <div class="row"><button class="btn" id="rCancel">Close</button><button class="btn go" id="rGo"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l7.5 18-7.5-4.2-7.5 4.2z"/></svg>Start driving</button></div>
 </div>
+<div id="fuelSheet" class="sheet hide">
+  <h3>Cheapest fuel near you</h3>
+  <div class="sub" id="fuSub">Prices from Service Victoria</div>
+  <div class="seg" id="fuType"></div>
+  <div id="fuelList"></div>
+  <div class="row" style="margin-top:10px"><button class="btn go" id="fuClose">Done</button></div>
+  <div class="fine">Fuel prices come from Service Victoria and are about a day old, so the pump price can differ. Source: Service Victoria Servo Saver.</div>
+</div>
 <div id="layersPanel" class="sheet hide">
   <h3>What to show</h3>
   <div class="sub">Live data from Transport Victoria and VicEmergency</div>
   <div id="lrList"></div>
+  <div class="lookrow"><div>Speed limits and cameras<small>Shows the limit while driving and warns about cameras</small></div><div class="seg" id="lpSpd"><button data-v="1">On</button><button data-v="0">Off</button></div></div>
   <div class="lookrow"><div>Map look<small>Auto turns on night colours after sunset</small></div><div class="seg" id="lpLook"><button data-v="auto">Auto</button><button data-v="day">Day</button><button data-v="night">Night</button></div></div>
   <div class="row" style="margin-top:10px"><button class="btn" id="lpVoice">Voice: on</button><button class="btn go" id="lpClose">Done</button></div>
+  <div class="fine" id="lpFuel"></div>
   <div class="fine">Alerts refresh every 3 minutes, roadworks every 6 hours. Roadie has no live traffic speeds, so routes do not avoid traffic jams. Always follow road signs and police directions.</div>
 </div>
 <div id="reportSheet" class="sheet hide" style="z-index:8">
@@ -205,10 +236,12 @@ body:not(.day) .maplibregl-ctrl-attrib-button{filter:invert(1)}
 <div id="guide" class="hide">
   <div id="banner"><div id="bMain"><div id="bArrow"></div><div style="min-width:0"><div id="bDist">--</div><div id="bText"></div></div></div>
     <div id="bSub" class="hide"><div id="lanes" class="hide"></div><div id="bThen" class="hide"></div></div></div>
+  <div id="roadbar"></div>
   <div id="warn" class="hide"><img alt=""><div><b></b><small></small></div></div>
 </div>
 <div id="navbar" class="hide">
   <div id="speed"><b id="spd">--</b><small>km/h</small></div>
+  <div id="limit" aria-label="Speed limit">--</div>
   <div class="eta"><b id="nMin">--</b><div><span id="nRem"></span> &middot; <span id="nEta"></span></div></div>
   <button class="fab" id="nMute" aria-label="Voice"></button>
   <button class="fab hide" id="nReport" aria-label="Report" style="background:#ff9800;color:#241400"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -228,6 +261,12 @@ const MAP_STYLE='https://tiles.openfreemap.org/styles/liberty';   /* OpenFreeMap
 const MAP_BACKUP={night:'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',day:'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'};
 const OSRM='https://router.project-osrm.org/route/v1/driving/';
 const PHOTON='https://photon.komoot.io/api/';
+const PHOTON_REV='https://photon.komoot.io/reverse';
+const VALHALLA='https://valhalla1.openstreetmap.de/';   /* free OSM router: gives speed limits */
+const CAMS_URL='cameras.json';                          /* official Victorian camera list, shipped with the app */
+/* Fuel prices (Part 3): apply for a free Servo Saver Public API key, then fill this in.
+   service.vic.gov.au/find-services/transport-and-driving/servo-saver/help-centre/servo-saver-public-api */
+const FUEL_CFG=null;   /* e.g. {url:'https://...', consumerId:'your-id', header:'x-consumer-id'} */
 const MELB=[144.9631,-37.8136];
 /* Driver reports (Part 2): paste your Firebase web app config here, or leave null to turn reports off */
 const FIREBASE_CONFIG={apiKey:"AIzaSyAlPT_Kc6mPxHwzgTVs-KfRVKODz9TdFbU",authDomain:"roadie-c0ce8.firebaseapp.com",projectId:"roadie-c0ce8",storageBucket:"roadie-c0ce8.firebasestorage.app",messagingSenderId:"296311896319",appId:"1:296311896319:web:8753beeb72c79b52b934ca"};
@@ -253,19 +292,21 @@ const KINDS={
   u_jam:   {label:'Traffic jam',       col:'#c62828', g:'car',    crowd:1},
   u_hazard:{label:'Hazard',            col:'#fb8c00', g:'warn',   crowd:1},
   u_closed:{label:'Road closed',       col:'#b71c1c', g:'closed', crowd:1},
-  u_camera:{label:'Speed camera',      col:'#546e7a', g:'camera', crowd:1}
+  u_camera:{label:'Speed camera',      col:'#546e7a', g:'camera', crowd:1},
+  camfix:  {label:'Fixed speed camera',col:'#fdd835', g:'camera', dark:1}
 };
 const GROUPS={
   hazards:{label:'Crashes and hazards', short:'Crashes', sub:'Crashes, closures, road damage, stopped cars', icon:'crash', on:true},
   floods: {label:'Flooded roads',       short:'Floods',  sub:'Water over the road',                          icon:'flood', on:true},
   works:  {label:'Roadworks',           short:'Works',sub:'Planned works and events (bigger download)',  icon:'works', on:true},
   emerg:  {label:'Fires and emergencies',short:'Fires',  sub:'VicEmergency incidents and warnings',          icon:'fire',  on:true},
-  reports:{label:'Driver reports',      short:'Reports', sub:'Police, jams and hazards from Roadie drivers', icon:'u_police', on:true}
+  reports:{label:'Driver reports',      short:'Reports', sub:'Police, jams and hazards from Roadie drivers', icon:'u_police', on:true},
+  cams:   {label:'Speed cameras',       short:'Cameras', sub:'Official fixed camera sites in Victoria',        icon:'camfix', on:true}
 };
 const groupList=()=>Object.entries(GROUPS).filter(([g])=>g!=='reports'||FIREBASE_CONFIG);
-function drawGlyph(c,g,s){
+function drawGlyph(c,g,s,fg){
   c.save();c.translate(s/2,s/2);const u=s/64;c.scale(u,u);
-  c.fillStyle='#fff';c.strokeStyle='#fff';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';
+  c.fillStyle=fg||'#fff';c.strokeStyle=fg||'#fff';c.lineWidth=5;c.lineCap='round';c.lineJoin='round';
   const P=(pts,fill)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();fill?c.fill():c.stroke()};
   switch(g){
     case 'crash': P([[0,-17],[5,-6],[17,-9],[9,1],[16,12],[3,8],[-2,18],[-5,7],[-17,10],[-9,0],[-16,-11],[-4,-6]],1);break;
@@ -282,7 +323,7 @@ function drawGlyph(c,g,s){
     case 'police': P([[0,-18],[15,-12],[13,5],[0,18],[-13,5],[-15,-12]],1);c.fillStyle='#0007';
       {const pts=[];for(let i=0;i<10;i++){const r=i%2?3.5:8,a=-Math.PI/2+i*Math.PI/5;pts.push([r*Math.cos(a),r*Math.sin(a)-1])}P(pts,1)}break;
     case 'camera': c.fillRect(-16,-8,32,21);c.fillRect(-6,-14,12,7);c.fillStyle='#0008';c.beginPath();c.arc(0,2,7,0,7);c.fill();
-      c.fillStyle='#fff';c.beginPath();c.arc(0,2,3,0,7);c.fill();break;
+      c.fillStyle=fg||'#fff';c.beginPath();c.arc(0,2,3,0,7);c.fill();break;
     case 'wind': c.beginPath();c.moveTo(-16,-6);c.lineTo(8,-6);c.arc(8,-11,5,Math.PI/2,-Math.PI/2,true);c.moveTo(-16,3);c.lineTo(12,3);c.moveTo(-16,11);c.lineTo(4,11);c.stroke();break;
   }
   c.restore();
@@ -294,8 +335,8 @@ function makeIcon(kind,size){
   c.beginPath();c.arc(size/2,cy,r,0,7);c.fillStyle=k.col;c.fill();c.restore();
   const gr=c.createLinearGradient(0,cy-r,0,cy+r);gr.addColorStop(0,'rgba(255,255,255,.22)');gr.addColorStop(.55,'rgba(255,255,255,0)');
   c.beginPath();c.arc(size/2,cy,r,0,7);c.fillStyle=gr;c.fill();
-  c.lineWidth=size*(k.crowd?.09:.065);c.strokeStyle=k.crowd?'#33ccff':'#fff';c.stroke();
-  c.save();c.translate(0,cy-size/2);drawGlyph(c,k.g,size*.8);c.restore();return cv;
+  c.lineWidth=size*(k.crowd?.09:.065);c.strokeStyle=k.crowd?'#33ccff':(k.dark?'#5d4a00':'#fff');c.stroke();
+  c.save();c.translate(0,cy-size/2);drawGlyph(c,k.g,size*.8,k.dark?'#2b2200':null);c.restore();return cv;
 }
 const ICON_URL={};
 for(const k in KINDS){try{ICON_URL[k]=makeIcon(k,64).toDataURL()}catch(e){ICON_URL[k]=''}}
@@ -337,8 +378,8 @@ function thin(line,max){const r=a=>[Math.round(a[0]*1e5)/1e5,Math.round(a[1]*1e5
   const out=[],step=(line.length-1)/(max-1);for(let i=0;i<max;i++)out.push(r(line[Math.round(i*step)]));return out}
 
 /* ===================== data ===================== */
-let items={live:[],works:[],emerg:[],reports:[]};
-const feedState={live:{},works:{},emerg:{},reports:{}};
+let items={live:[],works:[],emerg:[],reports:[],cams:[]};
+const feedState={live:{},works:{},emerg:{},reports:{},cams:{}};
 const enabled=Object.assign(Object.fromEntries(Object.entries(GROUPS).map(([k,v])=>[k,v.on])),store.get('layers',{}));
 const uid=()=>Math.random().toString(36).slice(2);
 function unplannedKind(p){const t=(p.eventType||'').toLowerCase(),s=(p.eventSubType||p.eventSubtype||'').toLowerCase(),imp=((p.impact||{}).impactType||'').toLowerCase();
@@ -503,7 +544,7 @@ map.on('contextmenu',e=>{if(nav.on)return;const ll=e.lngLat.toArray();const lab=
   const rb=pop.getElement().querySelector('[data-a=rep]');if(rb)rb.onclick=()=>{pop.remove();openReport(ll)}});
 const PRIO={u_crash:1,u_closed:2,u_police:3,u_hazard:7,u_jam:8,u_camera:9,crash:1,closed:2,fire:3,flood:4,rescue:5,vehicle:6,hazard:7,hazmat:8,weather:9,emerg:10,works:20,event:21,burn:30};
 let byId=new Map();
-const allItems=()=>[...items.reports,...items.live,...items.emerg,...items.works];
+const allItems=()=>[...items.reports,...items.live,...items.emerg,...items.works,...items.cams];
 const visibleItems=()=>allItems().filter(i=>enabled[i.grp]);
 function refreshMap(){
   const vis=visibleItems();byId=new Map(vis.map(i=>[i.id,i]));
@@ -521,20 +562,27 @@ function updateStatus(){const parts=[],L=feedState.live,W=feedState.works,E=feed
   if(feedState.reports.ok===false)parts.push('<span class="err">Driver reports: '+esc(feedState.reports.err)+'</span>');
   if(enabled.works){if(W.loading)parts.push('Loading roadworks, part '+W.loading+'...');else if(W.ok===false)parts.push('<span class="err">Roadworks: '+esc(W.err)+'</span>')}
   const t=Math.max(L.ok?L.at:0,E.ok?E.at:0);
-  if(t)parts.unshift('<b>'+visibleItems().length+'</b> alerts on the map &middot; updated '+clock(new Date(t)));
+  if(feedState.cams.ok===false)parts.push('<span class="err">Speed cameras: '+esc(feedState.cams.err)+'</span>');
+  if(t)parts.unshift('<b>'+visibleItems().filter(i=>i.grp!=='cams').length+'</b> alerts on the map &middot; updated '+clock(new Date(t)));
   $('status').innerHTML=parts.join('<br>')||'Loading road alerts...'}
 function renderChips(){const all=allItems();
   $('chips').innerHTML=groupList().map(([g,v])=>{const n=all.filter(i=>i.grp===g).length;
     return '<button class="chip'+(enabled[g]?' on':'')+'" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" width="17" height="17" alt=""><span class="lbl">'+esc(v.short)+'</span> <em>'+n+'</em></button>'}).join('');
   $('chips').querySelectorAll('.chip').forEach(b=>b.onclick=()=>toggleGroup(b.dataset.g))}
 function toggleGroup(g){enabled[g]=!enabled[g];store.set('layers',enabled);
-  if(g==='works'&&enabled.works&&!items.works.length)loadWorks();refreshMap();renderLayers()}
+  if(g==='works'&&enabled.works&&!items.works.length)loadWorks();
+  if(g==='cams'&&enabled.cams&&!items.cams.length)loadCams();
+  refreshMap();renderLayers()}
 function renderLayers(){
   $('lrList').innerHTML=groupList().map(([g,v])=>'<div class="lr" data-g="'+g+'"><img src="'+ICON_URL[v.icon]+'" alt=""><div>'+esc(v.label)+'<small>'+esc(v.sub)+'</small></div><span class="sw'+(enabled[g]?' on':'')+'"></span></div>').join('')
-   +'<div class="legend">'+['crash','closed','hazard','vehicle','flood','works','event','fire','burn','rescue','weather'].concat(FIREBASE_CONFIG?['u_police','u_jam','u_camera']:[]).map(k=>'<span><img src="'+ICON_URL[k]+'" alt="">'+KINDS[k].label+'</span>').join('')+'</div>'
+   +'<div class="legend">'+['crash','closed','hazard','vehicle','flood','works','event','fire','burn','rescue','weather','camfix'].concat(FIREBASE_CONFIG?['u_police','u_jam','u_camera']:[]).map(k=>'<span><img src="'+ICON_URL[k]+'" alt="">'+KINDS[k].label+'</span>').join('')+'</div>'
    +(FIREBASE_CONFIG?'<div class="fine" style="margin-top:2px">A blue ring means a Roadie driver reported it.</div>':'');
   $('lrList').querySelectorAll('.lr').forEach(r=>r.onclick=()=>toggleGroup(r.dataset.g));
   $('lpVoice').textContent='Voice: '+(voiceOn?'on':'off');
+  $('lpSpd').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',(b.dataset.v==='1')===spdWarn);
+    b.onclick=()=>{spdWarn=b.dataset.v==='1';store.set('spdWarn',spdWarn);renderLayers();if(spdWarn&&route.geo&&!route.limits)loadRouteLimits()}});
+  $('lpFuel').innerHTML=fuelOn()?'Fuel prices are on. Data: Service Victoria Servo Saver, about a day old.'
+    :'Fuel prices are not set up yet. They need a free key from Service Victoria (Servo Saver Public API).';
   $('lpLook').querySelectorAll('button').forEach(b=>{b.classList.toggle('on',b.dataset.v===look);b.onclick=()=>{look=b.dataset.v;store.set('look',look);renderLayers();applyLook()}})}
 function popupHTML(i,withDir){const k=KINDS[i.kind];let d=i.desc||'';if(d.length>700)d=d.slice(0,700)+'...';
   const tags=(i.closed?['<span class="tag red">Road closed</span>']:[]).concat(i.tags.filter(t=>!(i.closed&&/road closed/i.test(t))).map(t=>'<span class="tag">'+esc(t)+'</span>')).join('');
@@ -656,7 +704,7 @@ function prepRoute(rt){/* cumulative distance plus a grid of segments, for fast 
   const steps=[];let acc=0;
   for(const leg of rt.legs)for(const s of leg.steps){const mt=s.maneuver||{};steps.push({s,at:acc,text:stepText(s),arrow:stepArrow(s),lanes:stepLanes(s),mod:mt.modifier||'straight',quiet:mt.type==='new name'||(mt.type==='continue'&&(!mt.modifier||mt.modifier==='straight'))});acc+=s.distance}
   const scale=cum[cum.length-1]/(acc||1);steps.forEach(x=>x.at*=scale);
-  route.geo={co,xy,cum,P,grid,C,total:cum[cum.length-1],steps}}
+  route.geo={co,xy,cum,P,grid,C,total:cum[cum.length-1],steps};route.limits=null;loadRouteLimits()}
 function nearestOnRoute(p,from,to){const g=route.geo;let best={d:Infinity,along:0,seg:0};
   const test=i=>{const a=g.xy[i],b=g.xy[i+1];const dx=b[0]-a[0],dy=b[1]-a[1];const L2=dx*dx+dy*dy;
     let t=L2?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L2:0;t=Math.max(0,Math.min(1,t));
@@ -690,12 +738,17 @@ function renderRouteSheet(){const rt=route.data;if(!rt)return;
   const a=route.alerts;
   if(!a.length){$('rAlerts').innerHTML='<p class="okmsg">No reported crashes, hazards or works on this route.</p>';return}
   const cnt={};a.forEach(x=>{const l=alertLabel(x.i);cnt[l]=(cnt[l]||0)+1});
-  $('rAlerts').innerHTML='<div class="wsub">'+a.length+' alert'+(a.length>1?'s':'')+' on your route: '+Object.entries(cnt).map(([k,v])=>v+' '+k.toLowerCase()).join(', ')+'</div>'
-    +a.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertIcon(x.i)]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
-  $('rAlerts').querySelectorAll('.ra').forEach(b=>b.onclick=()=>{const x=a[+b.dataset.n];map.flyTo({center:x.i.pt,zoom:15});showPopup(x.i,x.i.pt)})}
+  const plu=(w,n)=>n<2?w:(/(s|sh|ch|x)$/i.test(w)?w+'es':w+'s');
+  const nc=a.filter(x=>x.i.src==='cam').length,nh=a.length-nc,hb=[];
+  if(nh)hb.push(nh+' '+plu('alert',nh));if(nc)hb.push(nc+' speed '+plu('camera',nc));
+  const dsp=a.slice().sort((x,y)=>((x.i.src==='cam')-(y.i.src==='cam'))||x.along-y.along);
+  const det=Object.keys(cnt).length>1?': '+Object.entries(cnt).map(([k,v])=>v+' '+plu(k.toLowerCase(),v)).join(', '):'';
+  $('rAlerts').innerHTML='<div class="wsub">'+hb.join(' and ')+' on your route'+det+'</div>'
+    +dsp.slice(0,30).map((x,n)=>'<button class="ra" data-n="'+n+'"><img src="'+ICON_URL[alertIcon(x.i)]+'" alt=""><div>'+esc(x.i.title)+'<small>'+esc([x.i.road,x.i.place].filter(Boolean).join(', '))+'</small></div><span>'+fmtDist(x.along)+'</span></button>').join('');
+  $('rAlerts').querySelectorAll('.ra').forEach(b=>b.onclick=()=>{const x=dsp[+b.dataset.n];map.flyTo({center:x.i.pt,zoom:15});showPopup(x.i,x.i.pt)})}
 $('rCancel').onclick=()=>{clearRoute();hideSheets();$('q').value='';$('qx').classList.add('hide')};
-function showSheet(id){['routeSheet','layersPanel','reportSheet'].forEach(s=>$(s).classList.toggle('hide',s!==id));$('fabs').classList.add('hide');$('status').classList.add('hide')}
-function hideSheets(){['routeSheet','layersPanel','reportSheet'].forEach(s=>$(s).classList.add('hide'));if(!nav.on){$('fabs').classList.remove('hide');$('status').classList.remove('hide')}}
+function showSheet(id){['routeSheet','layersPanel','reportSheet','fuelSheet'].forEach(s=>$(s).classList.toggle('hide',s!==id));$('fabs').classList.add('hide');$('status').classList.add('hide')}
+function hideSheets(){['routeSheet','layersPanel','reportSheet','fuelSheet'].forEach(s=>$(s).classList.add('hide'));if(!nav.on){$('fabs').classList.remove('hide');$('status').classList.remove('hide')}}
 $('bLayers').onclick=()=>{renderLayers();showSheet('layersPanel')};
 $('lpClose').onclick=()=>{if(route.data&&!nav.on)showSheet('routeSheet');else hideSheets()};
 $('lpVoice').onclick=()=>{voiceOn=!voiceOn;store.set('voice',voiceOn);renderLayers();setMuteIcon();if(voiceOn)say('Voice is on',true)};
@@ -777,10 +830,13 @@ async function startNav(){if(!route.data)return;
   Object.assign(nav,{on:true,follow:true,off:0,spoken:{},warned:{},progress:0,seg:0});
   hideSheets();['top','fabs','status'].forEach(i=>$(i).classList.add('hide'));['guide','navbar'].forEach(i=>$(i).classList.remove('hide'));
   meEl.classList.add('nav');setMuteIcon();if(curPopup)curPopup.remove();$('spd').textContent='--';setTraveled(0);
+  overSt.n=0;overSt.beep=0;overSt.voice=0;overSt.on=false;mobSaid='';$('speed').classList.remove('over');$('limit').classList.remove('show');$('navbar').classList.remove('lim');$('roadbar').innerHTML='';
+  if(!route.limits)loadRouteLimits();locateLimit();
   if(meMarker.setPitchAlignment)meMarker.setPitchAlignment('map');
   if(bgWatch!=null){navigator.geolocation.clearWatch(bgWatch);bgWatch=null}
-  const n=route.alerts.length;nav.spoken[0]={far:1,near:1,now:1};
-  say((route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(n?n+' alert'+(n>1?'s':'')+' on your route.':''),true);
+  const nc=route.alerts.filter(a=>a.i.src==='cam').length,n=route.alerts.length-nc;nav.spoken[0]={far:1,near:1,now:1};
+  const bits=[];if(n)bits.push(n+' alert'+(n>1?'s':''));if(nc)bits.push(nc+' speed camera'+(nc>1?'s':''));
+  say((route.geo.steps[0]?route.geo.steps[0].text:'Starting route')+'. '+(bits.length?bits.join(' and ')+' on your route.':''),true);
   updateBanner();
   nav.watch=navigator.geolocation.watchPosition(onFix,e=>{if(e.code===1){toast(locBlockedMsg(),9000);stopNav()}},{enableHighAccuracy:true,maximumAge:1000,timeout:20000});
   try{if('wakeLock' in navigator)nav.wake=await navigator.wakeLock.request('screen')}catch(e){}
@@ -788,6 +844,7 @@ async function startNav(){if(!route.data)return;
 function stopNav(arrived){if(!nav.on)return;nav.on=false;if(nav.watch!=null)navigator.geolocation.clearWatch(nav.watch);nav.watch=null;
   try{nav.wake&&nav.wake.release()}catch(e){}nav.wake=null;
   ['guide','navbar','warn','recenter'].forEach(i=>$(i).classList.add('hide'));$('top').classList.remove('hide');
+  $('roadbar').innerHTML='';$('limit').classList.remove('show');$('navbar').classList.remove('lim');$('speed').classList.remove('over');
   meEl.classList.remove('nav');meMarker.setRotation(0);if(meMarker.setPitchAlignment)meMarker.setPitchAlignment('viewport');setTraveled(0);
   if(arrived||!route.data){clearRoute();$('q').value='';$('qx').classList.add('hide');hideSheets()}else{showSheet('routeSheet');renderRouteSheet()}
   map.easeTo({pitch:0,bearing:0,duration:600});startBgWatch()}
@@ -811,6 +868,10 @@ async function onFix(pos){
     if(!(me.speed>1.5)){const a=g.co[n.seg],b=g.co[Math.min(n.seg+1,g.co.length-1)];if(a!==b)me.heading=bearing(a,b)}}
   meMarker.setRotation(me.heading||0);if(nav.follow)followCam();
   setTraveled(nav.progress/(g.total||1));updateBanner();checkHazards();
+  const cur=g.steps.filter(x=>x.at<=nav.progress+5).pop();
+  updateRoadInfo((cur&&cur.s&&cur.s.name)||'');
+  if(!route.limits||nav.off>=2)locateLimit();
+  showSpeed();renderRoadbar();checkMobileCam();
   if(g.total-nav.progress<30&&n.d<60){say('You have arrived'+(route.dest&&route.dest.name!=='Dropped pin'?' at '+route.dest.name:''),true);toast('You have arrived',4000);stopNav(true)}}
 function updateBanner(){const g=route.geo;if(!g)return;const p=nav.progress;
   let k=g.steps.findIndex(x=>x.at>p+5&&!x.quiet);if(k<0)k=g.steps.length-1;const st=g.steps[k];const dist=Math.max(0,st.at-p);
@@ -829,16 +890,201 @@ function updateBanner(){const g=route.geo;if(!g)return;const p=nav.progress;
   if(!sp.far&&dist<(fast?1500:700)&&dist>(fast?600:300)){sp.far=1;say('In '+sayDist(dist)+', '+lc(st.text)+lt)}
   else if(!sp.near&&dist<=(fast?450:200)&&dist>60){sp.near=sp.far=1;say('In '+sayDist(dist)+', '+lc(st.text)+lt)}
   else if(!sp.now&&dist<=(fast?60:35)){sp.now=sp.near=sp.far=1;say(st.text+thenTxt,true)}}
-function checkHazards(){const p=nav.progress;const ahead=route.alerts.filter(x=>x.along>p-20&&x.along-p<3000);
+function checkHazards(){const p=nav.progress;const ahead=route.alerts.filter(x=>x.along>p-20&&x.along-p<(x.i.src==='cam'?900:3000));
   if(!ahead.length){$('warn').classList.add('hide');return}
   const x=ahead[0],d=Math.max(0,x.along-p),i=x.i,lab=alertLabel(i);
   const w=$('warn');w.querySelector('img').src=ICON_URL[alertIcon(i)];
-  w.querySelector('b').textContent=lab+' '+(d<30?'here':fmtDist(d)+' ahead');
-  w.querySelector('small').textContent=[i.road,i.title!==lab?i.title:''].filter(Boolean).join(' \u00b7 ');
+  w.querySelector('b').textContent=(i.src==='cam'?(i.p2p?'Point to point camera':'Speed camera'):lab)+' '+(d<30?'here':fmtDist(d)+' ahead');
+  w.querySelector('small').textContent=[i.road,i.src==='cam'?i.place:(i.title!==lab?i.title:'')].filter(Boolean).join(' \u00b7 ');
   w.classList.remove('hide');
   const ws=nav.warned[i.id]||(nav.warned[i.id]={});
+  if(i.src==='cam'){if(!ws.a&&d<=800&&d>120){ws.a=ws.b=1;say((i.p2p?'Point to point camera':'Speed camera')+' '+sayDist(d)+' ahead')}return}
   if(!ws.a&&d<=1500&&d>300){ws.a=1;say(lab+' reported '+sayDist(d)+' ahead')}
   else if(!ws.b&&d<=300){ws.a=ws.b=1;say(lab+' ahead, take care')}}
+
+/* ===================== speed cameras, speed limits, fuel (Part 3) ===================== */
+let CAM={fixed:[],mobile:{},types:[]},camLoaded=false;
+const roadNm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+async function loadCams(){
+  if(camLoaded||!enabled.cams)return;camLoaded=true;
+  try{
+    const j=(await getJSON(CAM_ABS(),null,20000)).json;
+    CAM.types=j.fixedTypes||[];CAM.mobile={};
+    for(const sub in j.mobile||{})CAM.mobile[roadNm(sub)]=(j.mobile[sub]||[]).map(roadNm);
+    items.cams=(j.fixed||[]).map((r,n)=>{
+      const [lat,lng,ty,street,suburb,xs]=r,kind=CAM.types[ty]||'';
+      const p2p=/point/i.test(kind);
+      return {id:'cam'+n,src:'cam',grp:'cams',kind:'camfix',pt:[lng,lat],lines:[],polys:[],
+        title:p2p?'Point to point camera':(/freeway|highway/i.test(kind)?'Fixed speed camera':'Red light and speed camera'),
+        road:street||'',place:suburb||'',tags:[kind].filter(Boolean),
+        desc:'Official Victorian road safety camera site'+(xs?', at '+street+' and '+xs:'')+'. Fixed cameras can check speed, red lights and unregistered vehicles.',
+        url:'https://www.vic.gov.au/find-road-safety-camera',updatedMs:0,active:true,closed:false,p2p};
+    });
+    feedState.cams={ok:true,at:Date.now(),upd:j.updated||''};
+  }catch(e){camLoaded=false;feedState.cams={ok:false,err:friendlyErr(e)}}
+  refreshMap();renderLayers();
+}
+function CAM_ABS(){try{return new URL(CAMS_URL,location.href).href}catch(e){return CAMS_URL}}
+/* is this road an approved mobile (trailer or car) camera spot? */
+function mobileCamRoad(road,suburb){
+  if(!road||!suburb)return false;const list=CAM.mobile[roadNm(suburb)];
+  return !!(list&&list.includes(roadNm(road)));
+}
+
+/* ---- speed limits from Valhalla ---- */
+let spdWarn=store.get('spdWarn',true);
+function decodePoly6(str){const out=[];let i=0,lat=0,lon=0;
+  while(i<str.length){let r=0,sh=0,b;do{b=str.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5}while(b>=32);lat+=(r&1)?~(r>>1):(r>>1);
+    r=0;sh=0;do{b=str.charCodeAt(i++)-63;r|=(b&31)<<sh;sh+=5}while(b>=32);lon+=(r&1)?~(r>>1):(r>>1);
+    out.push([lon/1e6,lat/1e6])}
+  return out}
+async function loadRouteLimits(){
+  const g=route.geo;if(!g||!spdWarn)return;
+  const token=route.limTok=(route.limTok||0)+1;
+  try{
+    const step=Math.max(80,g.total/600),shape=[];let last=-1e9;
+    for(let i=0;i<g.co.length;i++){if(g.cum[i]-last>=step||i===g.co.length-1){shape.push({lat:+g.co[i][1].toFixed(6),lon:+g.co[i][0].toFixed(6)});last=g.cum[i]}}
+    if(shape.length<2)return;
+    const body={shape,costing:'auto',shape_match:'map_snap',filters:{action:'include',
+      attributes:['edge.speed_limit','edge.names','edge.begin_shape_index','shape']}};
+    const r=await fetch(VALHALLA+'trace_attributes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();if(route.limTok!==token||route.geo!==g)return;
+    const pts=j.shape?decodePoly6(j.shape):[];const out=[];
+    for(const e of (j.edges||[])){
+      const kmh=e.speed_limit;if(!kmh)continue;
+      const c=pts[e.begin_shape_index||0];if(!c)continue;
+      const n=nearestOnRoute(g.P(c));if(n.d>80)continue;
+      out.push({at:n.along,kmh,name:(e.names||[]).find(x=>!/^\d/.test(x))||''});
+    }
+    out.sort((a,b)=>a.at-b.at);
+    const tidy=[];for(const x of out)if(!tidy.length||tidy[tidy.length-1].kmh!==x.kmh)tidy.push(x);
+    route.limits=tidy;
+  }catch(e){route.limits=null}
+}
+function limitAt(p){const L=route.limits;if(!L||!L.length)return null;
+  let lo=0,hi=L.length-1,ans=null;
+  while(lo<=hi){const m=(lo+hi)>>1;if(L[m].at<=p+30){ans=L[m];lo=m+1}else hi=m-1}
+  return ans?ans.kmh:(L[0].at-p<300?L[0].kmh:null)}
+/* fallback for when we are off-route: ask Valhalla about the point we are on */
+let locAt=0,locLL=null,locInfo=null;
+async function locateLimit(){
+  if(!spdWarn||!me)return;
+  if(Date.now()-locAt<9000||(locLL&&haversine(locLL,me.ll)<140))return;
+  locAt=Date.now();locLL=me.ll;
+  try{const r=await fetch(VALHALLA+'locate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({locations:[{lat:me.ll[1],lon:me.ll[0]}],costing:'auto',verbose:true})});
+    if(!r.ok)return;const j=await r.json();
+    const ed=((j[0]||{}).edges||[]).sort((a,b)=>(a.distance||0)-(b.distance||0))[0];
+    const ei=ed&&ed.edge_info;if(!ei)return;
+    locInfo={kmh:ei.speed_limit||null,name:(ei.names||[]).find(x=>!/^\d/.test(x))||'',at:Date.now()};
+  }catch(e){}
+}
+/* ---- the road you are on, and its suburb (for mobile camera spots) ---- */
+let roadInfo={name:'',suburb:'',ll:null,at:0};
+async function updateRoadInfo(name){
+  if(!name)return;
+  if(roadInfo.name===name&&roadInfo.suburb&&me&&roadInfo.ll&&haversine(roadInfo.ll,me.ll)<2500)return;
+  if(Date.now()-roadInfo.at<20000&&roadInfo.name===name)return;
+  roadInfo={name,suburb:roadInfo.name===name?roadInfo.suburb:'',ll:me?me.ll:null,at:Date.now()};
+  if(!me)return;
+  try{const j=(await getJSON(PHOTON_REV+'?lat='+me.ll[1].toFixed(5)+'&lon='+me.ll[0].toFixed(5)+'&limit=1',null,9000)).json;
+    const pr=((j.features||[])[0]||{}).properties||{};
+    if(roadInfo.name===name)roadInfo.suburb=pr.district||pr.locality||pr.city||'';
+  }catch(e){}
+}
+/* ---- over-speed beep ---- */
+let actx=null;
+function beep(f,ms,v){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();
+  const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;
+  g.gain.setValueAtTime(v||.07,t);g.gain.exponentialRampToValueAtTime(.0001,t+ms/1000);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+ms/1000)}catch(e){}}
+const overSt={n:0,beep:0,voice:0,on:false};
+function showSpeed(){
+  const el=$('limit'),sp=me&&me.speed>=0?me.speed*3.6:null;
+  let kmh=null,name='';
+  if(nav.on&&route.limits&&nav.off<2){kmh=limitAt(nav.progress)}
+  if(kmh==null&&locInfo&&Date.now()-locInfo.at<120000){kmh=locInfo.kmh;name=locInfo.name}
+  if(!spdWarn)kmh=null;
+  el.textContent=kmh||'--';el.classList.toggle('show',!!kmh);$('navbar').classList.toggle('lim',!!kmh);
+  const over=!!(kmh&&sp!=null&&sp>kmh+6);
+  overSt.n=over?overSt.n+1:0;
+  const hot=overSt.n>=2;$('speed').classList.toggle('over',hot);
+  if(hot&&!overSt.on){overSt.on=true;
+    if(Date.now()-overSt.beep>30000){overSt.beep=Date.now();beep(880,140);beep(660,160,.05)}
+    if(sp>kmh+10&&Date.now()-overSt.voice>60000){overSt.voice=Date.now();say('Speed limit '+kmh)}}
+  if(!hot)overSt.on=false;
+  return kmh;
+}
+/* ---- the strip under the turn banner ---- */
+function renderRoadbar(){
+  const rb=$('roadbar');if(!nav.on){rb.innerHTML='';return}
+  const out=[];
+  if(spdWarn&&roadInfo.name&&mobileCamRoad(roadInfo.name,roadInfo.suburb))
+    out.push('<span class="pill cam"><img src="'+ICON_URL.camfix+'" alt="">Mobile camera route</span>');
+  const html=out.join('');if(rb.innerHTML!==html)rb.innerHTML=html;
+}
+let mobSaid='';
+function checkMobileCam(){
+  if(!spdWarn||!nav.on)return;const k=roadNm(roadInfo.name)+'|'+roadNm(roadInfo.suburb);
+  if(k===mobSaid||!roadInfo.name||!roadInfo.suburb)return;
+  if(mobileCamRoad(roadInfo.name,roadInfo.suburb)){mobSaid=k;say('Mobile camera route')}
+  else mobSaid=k;
+}
+
+/* ---- fuel prices ---- */
+const FUEL_TYPES=[['U91','Unleaded'],['E10','E10'],['P95','Premium 95'],['P98','Premium 98'],['DL','Diesel'],['PDL','Premium diesel'],['LPG','LPG']];
+let fuelType=store.get('fuelType','U91'),fuelData=null,fuelAt=0;
+const fuelOn=()=>!!(FUEL_CFG&&FUEL_CFG.url);
+function pickNum(o,keys){for(const k of Object.keys(o||{})){const lk=k.toLowerCase();for(const want of keys)if(lk===want||lk.includes(want)){const v=+o[k];if(isFinite(v))return v}}return null}
+function pickStr(o,keys){for(const k of Object.keys(o||{})){const lk=k.toLowerCase();for(const want of keys)if(lk===want||lk.includes(want)){const v=o[k];if(typeof v==='string'&&v)return v}}return ''}
+function deepList(j){/* find the first array of objects in any JSON shape */
+  if(Array.isArray(j))return j;
+  for(const k in j||{}){const v=j[k];if(Array.isArray(v)&&v.length&&typeof v[0]==='object')return v;
+    if(v&&typeof v==='object'){const r=deepList(v);if(r)return r}}
+  return null}
+function normFuel(j){
+  const rows=deepList(j)||[];const out=[];
+  for(const r of rows){
+    const lat=pickNum(r,['latitude','lat']),lng=pickNum(r,['longitude','lng','lon']);
+    const name=pickStr(r,['tradingname','stationname','name','brand']);
+    const addr=pickStr(r,['address','street','suburb','location']);
+    const prices=[];
+    const pl=deepList(r)||[];
+    for(const q of pl){const ft=pickStr(q,['fueltype','type','fuel','product']),pv=pickNum(q,['price','amount','value']);
+      if(ft&&pv)prices.push({t:ft.toUpperCase().replace(/[^A-Z0-9]/g,''),p:pv>10?pv:pv*100})}
+    if(!prices.length){const ft=pickStr(r,['fueltype','type','product']),pv=pickNum(r,['price','amount']);
+      if(ft&&pv)prices.push({t:ft.toUpperCase().replace(/[^A-Z0-9]/g,''),p:pv>10?pv:pv*100})}
+    if(lat&&lng&&prices.length)out.push({name:name||'Service station',addr,ll:[lng,lat],prices});
+  }
+  return out}
+async function loadFuel(force){
+  if(!fuelOn())return;
+  if(fuelData&&!force&&Date.now()-fuelAt<3600000)return;
+  const h={};if(FUEL_CFG.consumerId)h[FUEL_CFG.header||'x-consumer-id']=FUEL_CFG.consumerId;
+  const j=(await getJSON(FUEL_CFG.url,h,25000)).json;
+  fuelData=normFuel(j);fuelAt=Date.now();
+}
+function fuelMatch(st){
+  const want=fuelType.toUpperCase();
+  let best=null;
+  for(const q of st.prices){if(q.t===want||q.t.startsWith(want)||want.startsWith(q.t))if(!best||q.p<best.p)best=q}
+  return best}
+function renderFuel(msg){
+  $('fuType').innerHTML=FUEL_TYPES.map(([v,l])=>'<button data-v="'+v+'"'+(v===fuelType?' class="on"':'')+'>'+l+'</button>').join('');
+  $('fuType').querySelectorAll('button').forEach(b=>b.onclick=()=>{fuelType=b.dataset.v;store.set('fuelType',fuelType);renderFuel()});
+  if(msg){$('fuelList').innerHTML='<div class="sub">'+esc(msg)+'</div>';return}
+  const here=me?me.ll:map.getCenter().toArray();
+  const rows=(fuelData||[]).map(st=>({st,q:fuelMatch(st),d:haversine(here,st.ll)}))
+    .filter(x=>x.q&&x.d<25000).sort((a,b)=>a.q.p-b.q.p||a.d-b.d).slice(0,25);
+  $('fuSub').textContent=rows.length?'Cheapest '+(FUEL_TYPES.find(f=>f[0]===fuelType)||[,''])[1].toLowerCase()+' within 25 km':'Prices from Service Victoria';
+  $('fuelList').innerHTML=rows.length?rows.map((x,i)=>'<button class="fu" data-i="'+i+'"><div>'+esc(x.st.name)+'<small>'+esc(x.st.addr||'')+(x.st.addr?' \u00b7 ':'')+fmtDist(x.d)+' away</small></div><b>'+(x.q.p/100).toFixed(1)+'</b></button>').join('')
+    :'<div class="sub">No prices for that fuel near you.</div>';
+  $('fuelList').querySelectorAll('.fu').forEach(b=>b.onclick=()=>{const x=rows[+b.dataset.i];hideSheets();planTo({name:x.st.name,addr:x.st.addr||'',ll:x.st.ll})});
+}
+if($('bFuel'))$('bFuel').onclick=async()=>{
+  showSheet('fuelSheet');renderFuel('Loading prices...');
+  try{await loadFuel();renderFuel()}catch(e){renderFuel('Could not load fuel prices ('+friendlyErr(e)+').')}};
+$('fuClose').onclick=()=>hideSheets();
 
 /* ===================== driver reports (Firebase) ===================== */
 const REPORT_TYPES=[['u_police','Police',60],['u_crash','Crash',120],['u_jam','Traffic jam',45],['u_hazard','Hazard',180],['u_closed','Road closed',300],['u_camera','Speed camera',240]];
@@ -908,6 +1154,8 @@ async function removeReport(i){if(!FB)return;if(curPopup)curPopup.remove();
 /* ===================== start up ===================== */
 applyLook(true);setInterval(()=>applyLook(),5*60000);
 renderChips();updateStatus();setMuteIcon();fbStart();
+if(enabled.cams)loadCams();
+if(fuelOn())$('bFuel').classList.remove('hide');
 loadLive();setInterval(()=>{if(document.visibilityState==='visible')loadLive()},LIVE_EVERY);
 if(enabled.works)loadWorks();setInterval(()=>{if(enabled.works&&document.visibilityState==='visible')loadWorks(true)},WORKS_EVERY);
 document.addEventListener('visibilitychange',async()=>{if(document.visibilityState!=='visible')return;
