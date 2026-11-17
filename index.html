@@ -26,11 +26,22 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #q{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--txt);font-size:16px;padding:10px 0}
 #q::placeholder{color:var(--mut)}
 #qx{width:34px;height:34px;border-radius:50%;font-size:20px;color:var(--mut)}
-#res{margin-top:6px;background:var(--card);border-radius:14px;box-shadow:0 6px 20px #0008;overflow:hidden;max-height:55vh;overflow-y:auto}
-#res button{display:block;width:100%;text-align:left;padding:11px 14px;border-bottom:1px solid #ffffff10}
-#res button:last-child{border:0}
-#res b{display:block;font-weight:600}
-#res small{color:var(--mut)}
+#res{margin-top:6px;background:var(--card);border-radius:14px;box-shadow:0 6px 20px #0008;overflow:hidden;max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#res .sr{display:flex;align-items:stretch;width:100%;text-align:left;padding:0}
+#res .sr>i{flex:none;width:60px;display:flex;align-items:center;justify-content:center;color:var(--txt);font-style:normal}
+#res .ln{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:14px 16px 14px 0;border-bottom:1px solid #ffffff17}
+#res .sr:last-child .ln{border-bottom:0}
+#res .tx{flex:1;min-width:0}
+#res b{display:block;font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#res small{display:block;color:var(--mut);font-size:14.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#res .dd{flex:none;color:var(--mut);font-size:15px;align-self:flex-start;margin-top:2px}
+#res .msg{padding:16px 20px;color:var(--mut)}
+#qb{display:none;width:34px;height:34px;margin-left:-8px;align-items:center;justify-content:center;color:var(--mut)}
+body.srch #top{left:0;right:0;top:0;bottom:0;z-index:20;background:var(--bg);padding-top:calc(10px + var(--st));display:flex;flex-direction:column}
+body.srch #sbox{margin:0 12px;background:var(--card2);box-shadow:none;border-radius:24px}
+body.srch #qb{display:flex}
+body.srch #qi,body.srch #chips{display:none}
+body.srch #res{flex:1;max-height:none;margin:12px 0 0;border-radius:0;box-shadow:none;background:none;border-top:1px solid #ffffff17;padding-bottom:var(--sb)}
 #chips{display:flex;gap:5px;margin-top:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
 #chips::-webkit-scrollbar{display:none}
 .chip{flex:none;display:flex;align-items:center;gap:4px;background:var(--card);border-radius:20px;padding:5px 8px 5px 5px;font-size:12.5px;box-shadow:0 3px 10px #0006;opacity:.55;border:1.5px solid transparent}
@@ -126,9 +137,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 <div id="map"></div>
 <div id="top">
   <div id="sbox">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+    <button id="qb" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <svg id="qi" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
     <input id="q" type="search" placeholder="Where to?" autocomplete="off" enterkeyhint="search">
-    <button id="qx" class="hide" aria-label="Clear">&times;</button>
+    <button id="qx" class="hide" aria-label="Clear"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></button>
   </div>
   <div id="res" class="hide"></div>
   <div id="chips"></div>
@@ -472,26 +484,60 @@ function locBlockedMsg(){return isIOS?'Location is blocked. On iPhone open Setti
 function startBgWatch(){if(bgWatch!=null||nav.on||!navigator.geolocation)return;bgWatch=navigator.geolocation.watchPosition(p=>{if(!nav.on)setMe(p)},()=>{},{enableHighAccuracy:false,maximumAge:30000})}
 
 /* ===================== search ===================== */
-let qTimer=null,qSeq=0;
-$('q').addEventListener('input',()=>{const v=$('q').value.trim();$('qx').classList.toggle('hide',!v);clearTimeout(qTimer);
-  if(v.length<3){$('res').classList.add('hide');return}qTimer=setTimeout(()=>search(v),350)});
-$('q').addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(qTimer);search($('q').value.trim())}});
-$('q').addEventListener('focus',()=>{if($('res').innerHTML&&$('q').value.trim().length>2)$('res').classList.remove('hide')});
-$('qx').onclick=()=>{$('q').value='';$('qx').classList.add('hide');$('res').classList.add('hide');if(route.data&&!nav.on){clearRoute();hideSheets()}};
-function placeLabel(p){const street=[p.housenumber,p.street].filter(Boolean).join(' ');const n=p.name||street||p.city||'Place';
-  const parts=[];if(p.name&&street)parts.push(street);
-  for(const x of [p.district||p.locality,p.city,p.state])if(x&&!parts.includes(x)&&x!==n)parts.push(x);
-  return {name:n,addr:parts.join(', ')}}
-async function search(v){if(!v)return;const my=++qSeq;const c=me?me.ll:map.getCenter().toArray();
-  const u=PHOTON+'?q='+encodeURIComponent(v)+'&limit=8&lang=en&lat='+c[1].toFixed(4)+'&lon='+c[0].toFixed(4)+'&bbox=112,-44.5,154.5,-9';
+let qTimer=null,qSeq=0,qRec=[],qPl=[];
+const ICO_PIN='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 21.5s-7-6-7-11.5a7 7 0 0 1 14 0c0 5.5-7 11.5-7 11.5z"/><circle cx="12" cy="10" r="2.6"/></svg>';
+const ICO_REC='<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 13.5A8 8 0 1 0 6.3 6.3"/><path d="M5 2.8v4h4"/><path d="M12 8v4.3l2.8 2"/></svg>';
+const ST_AB={street:'St',road:'Rd',avenue:'Ave',court:'Ct',drive:'Dr',place:'Pl',crescent:'Cres',boulevard:'Blvd',parade:'Pde',highway:'Hwy',lane:'Ln',terrace:'Tce',close:'Cl',grove:'Gr',circuit:'Cct',square:'Sq',parkway:'Pkwy',esplanade:'Esp',freeway:'Fwy',rise:'Rise',way:'Way'};
+const STATE_AB={'Victoria':'VIC','New South Wales':'NSW','Queensland':'QLD','South Australia':'SA','Western Australia':'WA','Tasmania':'TAS','Northern Territory':'NT','Australian Capital Territory':'ACT'};
+const abbrSt=s=>s?s.replace(/([A-Za-z]+)$/,w=>ST_AB[w.toLowerCase()]||w):s;
+let recents=store.get('recent',[]);
+function addRecent(d){recents=[{name:d.name,addr:d.addr||'',ll:d.ll}].concat(recents.filter(r=>!(r.name===d.name&&haversine(r.ll,d.ll)<150))).slice(0,12);store.set('recent',recents)}
+/* "4/5 Houston St" -> unit 4, number 5; the map data has no unit numbers, so we keep the one you typed */
+function parseQ(v){const m=v.match(/^\s*(?:(?:unit|apt|flat|u)\.?\s*)?(\d+[a-z]?)\s*[\/\\]\s*(\d+[a-z]?(?:-\d+)?)\b\s*(.*)$/i);
+  return m?{unit:m[1],num:m[2].toLowerCase(),q:(m[2]+' '+m[3]).trim()}:{unit:null,num:null,q:v.trim()}}
+function placeLabel(p,pq){const st=STATE_AB[p.state]||p.state||'';
+  const sub=[p.district,p.locality,p.city].find(x=>x&&x!==p.name)||'';const area=[sub,st].filter(Boolean).join(' ');
+  if(!p.name&&p.housenumber&&p.street){const unit=pq&&pq.unit&&String(p.housenumber).toLowerCase()===pq.num?pq.unit:null;
+    return {name:(unit?unit+'/':'')+p.housenumber+' '+abbrSt(p.street),addr:unit?p.housenumber+' '+p.street+', '+[sub,st].filter(Boolean).join(', '):area}}
+  const street=[p.housenumber,p.street].filter(Boolean).join(' ');
+  const n=p.type==='street'&&p.name?abbrSt(p.name):(p.name||street||p.city||'Place');
+  return {name:n,addr:[street&&street!==p.name?street:'',area].filter(Boolean).join(', ')}}
+function rowHtml(k,i,L,ll){const d=me?fmtDist(haversine(me.ll,ll)):'';
+  return '<button class="sr" data-k="'+k+'" data-i="'+i+'"><i>'+(k==='r'?ICO_REC:ICO_PIN)+'</i><div class="ln"><div class="tx"><b>'+esc(L.name)+'</b>'+(L.addr?'<small>'+esc(L.addr)+'</small>':'')+'</div>'+(d?'<span class="dd">'+d+'</span>':'')+'</div></button>'}
+function showResults(msg){
+  $('res').innerHTML=qRec.map((r,i)=>rowHtml('r',i,r,r.ll)).join('')+qPl.map((x,i)=>rowHtml('p',i,x.L,x.ll)).join('')+(msg?'<div class="msg">'+esc(msg)+'</div>':'');
+  $('res').classList.remove('hide');
+  $('res').querySelectorAll('.sr').forEach(b=>b.onclick=()=>{const x=b.dataset.k==='r'?qRec[+b.dataset.i]:Object.assign({},qPl[+b.dataset.i].L,{ll:qPl[+b.dataset.i].ll});
+    addRecent(x);exitSearch();planTo({name:x.name,addr:x.addr,ll:x.ll})})}
+const normQ=s=>s.toLowerCase().replace(/[^a-z0-9\/ ]+/g,' ').trim();
+function matchRecents(v){const toks=normQ(v).split(/\s+/).filter(Boolean);
+  return recents.filter(r=>{const h=normQ(r.name+' '+r.addr+' '+r.name.replace(/\b(St|Rd|Ave|Ct|Dr|Pl|Cres|Pde|Hwy|Tce|Cl|Gr)$/,m=>Object.keys(ST_AB).find(k=>ST_AB[k]===m)||m));return toks.every(t=>h.includes(t))}).slice(0,4)}
+function onQuery(){if(nav.on)return;document.body.classList.add('srch');const v=$('q').value;$('qx').classList.toggle('hide',!v);clearTimeout(qTimer);qSeq++;
+  if(!v.trim()){qRec=recents.slice(0,10);qPl=[];showResults(qRec.length?'':'Search for a place or an address, like 4/5 Houston St Epping');return}
+  qRec=matchRecents(v);const pq=parseQ(v);
+  if(!/[a-z]{2}/i.test(pq.q)){qPl=[];showResults(qRec.length?'':'Keep typing the street name');return}
+  showResults('');qTimer=setTimeout(()=>search(v),300)}
+function enterSearch(){if(nav.on)return;document.body.classList.add('srch');if(curPopup)curPopup.remove();onQuery()}
+function exitSearch(){document.body.classList.remove('srch');$('res').classList.add('hide');$('q').blur();clearTimeout(qTimer);qSeq++;
+  if(route.dest&&route.data)$('q').value=route.dest.name;$('qx').classList.toggle('hide',!$('q').value)}
+$('q').addEventListener('input',onQuery);
+$('q').addEventListener('click',()=>{if(!document.body.classList.contains('srch'))enterSearch()});
+$('q').addEventListener('focus',()=>{if(!document.body.classList.contains('srch')){if(route.data)$('q').select();enterSearch()}});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter'){clearTimeout(qTimer);$('q').blur();if(/[a-z]{2}/i.test(parseQ($('q').value).q))search($('q').value)}else if(e.key==='Escape')exitSearch()});
+$('qb').onclick=exitSearch;
+$('qx').onclick=()=>{$('q').value='';if(document.body.classList.contains('srch')){onQuery();$('q').focus();return}
+  $('qx').classList.add('hide');if(route.data&&!nav.on){clearRoute();hideSheets()}};
+async function search(v){const pq=parseQ(v);if(!pq.q)return;const my=++qSeq;const c=me?me.ll:map.getCenter().toArray();
+  const u=PHOTON+'?q='+encodeURIComponent(pq.q)+'&limit=15&lang=en&lat='+c[1].toFixed(4)+'&lon='+c[0].toFixed(4)+'&bbox=112,-44.5,154.5,-9';
   try{const r=await getJSON(u,null,12000);if(my!==qSeq)return;
-    const fs=(r.json.features||[]).filter(f=>!f.properties.countrycode||f.properties.countrycode==='AU');
-    $('res').innerHTML=fs.length?fs.map((f,i)=>{const L=placeLabel(f.properties);const d=me?' &middot; '+fmtDist(haversine(me.ll,f.geometry.coordinates)):'';
-      return '<button data-i="'+i+'"><b>'+esc(L.name)+'</b><small>'+esc(L.addr)+d+'</small></button>'}).join(''):'<button disabled><small>No places found</small></button>';
-    $('res').classList.remove('hide');
-    $('res').querySelectorAll('button[data-i]').forEach(b=>b.onclick=()=>{const f=fs[+b.dataset.i];const L=placeLabel(f.properties);
-      $('res').classList.add('hide');$('q').blur();planTo({name:L.name,addr:L.addr,ll:f.geometry.coordinates})});
-  }catch(e){if(my===qSeq){$('res').innerHTML='<button disabled><small>Search is not working right now ('+esc(friendlyErr(e))+')</small></button>';$('res').classList.remove('hide')}}}
+    const out=[];
+    for(const f of r.json.features||[]){const p=f.properties;if(p.countrycode&&p.countrycode!=='AU')continue;
+      const L=placeLabel(p,pq),ll=f.geometry.coordinates,key=(L.name+'|'+L.addr).toLowerCase();
+      if(out.some(o=>o.key===key&&haversine(o.ll,ll)<400))continue;
+      if(qRec.some(x=>x.name.toLowerCase()===L.name.toLowerCase()&&haversine(x.ll,ll)<400))continue;
+      out.push({key,L,ll});if(out.length>=8)break}
+    qPl=out;showResults(out.length||qRec.length?'':'No places found. Try adding the suburb.');
+  }catch(e){if(my===qSeq){qPl=[];showResults('Search is not working right now ('+friendlyErr(e)+')')}}}
 
 /* ===================== routing ===================== */
 const route={dest:null,data:null,from:null,alerts:[],geo:null};
